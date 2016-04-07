@@ -1,0 +1,15 @@
+INPUT(
+./debug\main.o
+./debug\Task.o
+./debug\TaskManager.o
+./debug\Scheduler.o
+./debug\Timer.o
+./debug\CronParser.o
+./debug\Server.o
+./debug\moc_Task.o
+./debug\moc_TaskManager.o
+./debug\moc_Scheduler.o
+./debug\moc_Timer.o
+./debug\moc_CronParser.o
+./debug\moc_Server.o
+);

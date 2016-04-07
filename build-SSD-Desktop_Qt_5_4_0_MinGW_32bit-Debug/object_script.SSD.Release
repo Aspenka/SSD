@@ -1,0 +1,15 @@
+INPUT(
+./release\main.o
+./release\Task.o
+./release\TaskManager.o
+./release\Scheduler.o
+./release\Timer.o
+./release\CronParser.o
+./release\Server.o
+./release\moc_Task.o
+./release\moc_TaskManager.o
+./release\moc_Scheduler.o
+./release\moc_Timer.o
+./release\moc_CronParser.o
+./release\moc_Server.o
+);
