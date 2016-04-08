@@ -350,8 +350,8 @@ taskVector_t TaskManager::toTaskVector()
 ======================================================*/
 void TaskManager::slt_Run (int index )
 {
-    qDebug() << "[" << QDateTime::currentDateTime().toString("dd/MM/yy hh:mm:ss");
-    qDebug() << "]: Call " << taskList[index].getTask() << " for " << taskList[index].getDevType() << endl;
+    qDebug() << "[" << QDateTime::currentDateTime().toString("dd/MM/yy hh:mm:ss")
+             << "]: Call " << taskList[index].getTask() << " for " << taskList[index].getDevType() << endl;
 }
 
 /*======================================================

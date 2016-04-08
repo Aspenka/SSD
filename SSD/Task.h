@@ -1,19 +1,3 @@
-#ifndef TASK_H
-#define TASK_H
-
-#include <QObject>
-#include <QString>
-#include <QStringList>
-#include <QtSql>
-
-
-enum status_e
-{
-    NEW_TASK = 1,
-    PROCESSING = 2,
-    DONE = 3
-};
-
 /*======================================================
 Класс Task описывает задачу и все возможные операции,
 совершаемые над ней.
@@ -60,6 +44,21 @@ enum status_e
     operator == - перегрузка оператора сравнения (==)
     operator != - перегрузка оператора сравнения (!=)
 ======================================================*/
+
+#ifndef TASK_H
+#define TASK_H
+
+#include <QObject>
+#include <QString>
+#include <QStringList>
+#include <QtSql>
+
+enum status_e
+{
+    NEW_TASK = 1,
+    PROCESSING = 2,
+    DONE = 3
+};
 
 class Task : public QObject
 {
