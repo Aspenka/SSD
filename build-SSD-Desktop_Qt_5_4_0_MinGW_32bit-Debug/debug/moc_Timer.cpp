@@ -20,7 +20,7 @@
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_Timer_t {
     QByteArrayData data[7];
-    char stringdata[50];
+    char stringdata[37];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -32,14 +32,13 @@ static const qt_meta_stringdata_Timer_t qt_meta_stringdata_Timer = {
 QT_MOC_LITERAL(0, 0, 5), // "Timer"
 QT_MOC_LITERAL(1, 6, 7), // "timeout"
 QT_MOC_LITERAL(2, 14, 0), // ""
-QT_MOC_LITERAL(3, 15, 18), // "QPair<QString,int>"
-QT_MOC_LITERAL(4, 34, 5), // "start"
-QT_MOC_LITERAL(5, 40, 4), // "pair"
-QT_MOC_LITERAL(6, 45, 4) // "stop"
+QT_MOC_LITERAL(3, 15, 5), // "index"
+QT_MOC_LITERAL(4, 21, 5), // "start"
+QT_MOC_LITERAL(5, 27, 4), // "cron"
+QT_MOC_LITERAL(6, 32, 4) // "stop"
 
     },
-    "Timer\0timeout\0\0QPair<QString,int>\0"
-    "start\0pair\0stop"
+    "Timer\0timeout\0\0index\0start\0cron\0stop"
 };
 #undef QT_MOC_LITERAL
 
@@ -60,14 +59,14 @@ static const uint qt_meta_data_Timer[] = {
        1,    1,   29,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       4,    1,   32,    2, 0x0a /* Public */,
-       6,    0,   35,    2, 0x0a /* Public */,
+       4,    2,   32,    2, 0x0a /* Public */,
+       6,    0,   37,    2, 0x0a /* Public */,
 
  // signals: parameters
-    QMetaType::Void, 0x80000000 | 3,    2,
+    QMetaType::Void, QMetaType::Int,    3,
 
  // slots: parameters
-    QMetaType::Void, 0x80000000 | 3,    5,
+    QMetaType::Void, QMetaType::QString, QMetaType::Int,    5,    3,
     QMetaType::Void,
 
        0        // eod
@@ -78,8 +77,8 @@ void Timer::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void 
     if (_c == QMetaObject::InvokeMetaMethod) {
         Timer *_t = static_cast<Timer *>(_o);
         switch (_id) {
-        case 0: _t->timeout((*reinterpret_cast< QPair<QString,int>(*)>(_a[1]))); break;
-        case 1: _t->start((*reinterpret_cast< QPair<QString,int>(*)>(_a[1]))); break;
+        case 0: _t->timeout((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 1: _t->start((*reinterpret_cast< QString(*)>(_a[1])),(*reinterpret_cast< int(*)>(_a[2]))); break;
         case 2: _t->stop(); break;
         default: ;
         }
@@ -87,7 +86,7 @@ void Timer::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void 
         int *result = reinterpret_cast<int *>(_a[0]);
         void **func = reinterpret_cast<void **>(_a[1]);
         {
-            typedef void (Timer::*_t)(QPair<QString,int> );
+            typedef void (Timer::*_t)(int );
             if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&Timer::timeout)) {
                 *result = 0;
             }
@@ -132,7 +131,7 @@ int Timer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 }
 
 // SIGNAL 0
-void Timer::timeout(QPair<QString,int> _t1)
+void Timer::timeout(int _t1)
 {
     void *_a[] = { Q_NULLPTR, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);

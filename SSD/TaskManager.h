@@ -3,11 +3,7 @@
 
 #include <QObject>
 #include <QList>
-#include <QtSql>
-#include <QVector>
-#include <QPair>
-#include <QVector>
-#include <QSettings>        //заглушка
+#include <QtSql>       
 #include "Task.h"
 #include "Scheduler.h"
 
@@ -43,8 +39,6 @@
     slotRun - слот запускает задачу на выполнение
 ======================================================*/
 
-#define taskVector_t      QVector <QPair <QString, int>>           //вектор заданий формата TaskPair
-
 class TaskManager : public QObject
 {
     Q_OBJECT
@@ -53,34 +47,35 @@ public:
     TaskManager ( QByteArray data, QObject *parent = 0 ); //заглушка
     ~TaskManager();
 
-    void            addTask (Task &task, int priority = 0);
-    void            removeTask ( int index );
-    void            removeTask ( Task task );
-    void            clear ();
-    void            handleTask (taskVector_t vector);
-    void            print ();       //заглушка
-    void            run ();         //заглушка
-
-    //void            updateTask ( int index, int status = 0, int priority = 0 ); //--
+    void                addTask (Task &task, int priority = 0);
+    void                removeTask ( int index );
+    void                removeTask ( Task task );
+    void                clear ();
+    void                handleTask ();
+    void                print ();       //заглушка
+    void                run ();         //заглушка
 
 private:
-    QList <Task>    taskList;
-    Scheduler       scheduler;
-    QSqlDatabase    database;
+    QList <Task>        taskList;
+    Scheduler           scheduler;
+    QSqlDatabase        database;
+    int                 limit;  //--
 
-    void            updateTask ( int index, int status = 0, int priority = 0 );
-    void            parse ( QByteArray data );
-    void            sortTasklist (QList<Task> &list, int left, int right);
-    void            parse ();           //заглушка
-    void            checkTaskTable();   //--
-    void            clearTaskTable();   //--
-    taskVector_t    toTaskVector();     //--
+    void                updateTask ( int index, int status = 0, int priority = 0 );
+    void                parse ( QByteArray data );
+    void                sortTasklist (QList<Task> &list, int left, int right);
+    void                parse ();           //заглушка
+    Task                parseArgs(Task & task, QList <QString> argList); //заглушка
+    void                setConfig();        //--
+    void                checkTaskTable();   //--
+    void                clearTaskTable();   //--
+    int                 getIndex(Task task);//--
 
 signals:
 
 public slots:
-    void            slt_Run ( int index );
-    void            slt_OnDone (Task task);  //--
+    void                slt_Run ( int index);
+    void                slt_OnDone (Task task);  //--
 };
 
 #endif // TASKMANAGER_H

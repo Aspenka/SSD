@@ -6,11 +6,22 @@
 #include <QTimerEvent>
 #include <QDateTime>
 #include <QDebug>
+#include <stdlib.h>
 
 //конструктор
-Timer::Timer(QObject *parent) : QObject(parent)
+Timer::Timer( QObject *parent) : QObject(parent)
 {
 
+}
+
+Timer::Timer(const Timer &obj, QObject *parent)
+{
+    parser = obj.parser;
+    cronJob = obj.cronJob;
+    taskIndex = obj.taskIndex;
+    timerStart = obj.timerStart;
+    singShot = obj.singShot;
+    nextExec = obj.nextExec;
 }
 
 //метод устанавливает синглшот
@@ -20,14 +31,14 @@ void Timer::setSingleShot(bool singleShot)
 }
 
 //метод запускает таймер
-void Timer::start(taskPair_t pair)
+void Timer::start(QString cron, int index)
 {
-    cronJob = pair.first;
-    taskIndex = pair.second;
+    cronJob = cron;
+    taskIndex = index;
     std::lock_guard<std::mutex> lock(mtxNextExec);
     nextExec = parser.getDateTime(cronJob).toTime_t();
-    timerId = startTimer(calcDiffTime());
-    assert(timerId);
+    timerStart = startTimer(calcDiffTime());
+    assert(timerStart);
 }
 
 //меотд останавливает таймер
@@ -35,31 +46,30 @@ void Timer::stop()
 {
     std::lock_guard<std::mutex> lock(mtxNextExec);
     nextExec = -1;
-    killTimer(timerId);
+    killTimer(timerStart);
 }
 
 //метод обрабатывает события таймера
 void Timer::timerEvent(QTimerEvent *event)
 {
-    if(event->timerId() != timerId)
+    if(event->timerId() != timerStart)
         return;
     std::lock_guard<std::mutex> lock(mtxNextExec);
-    killTimer(timerId);
-    timerId = 0;
+    killTimer(timerStart);
+    timerStart = 0;
     if(nextExec > QDateTime::currentDateTime().toTime_t())
     {
-        timerId = startTimer(calcDiffTime());
-        assert(timerId);
+        timerStart = startTimer(calcDiffTime());
+        assert(timerStart);
     }
     else
     {
-        taskPair_t pair(cronJob, taskIndex);
-        emit timeout(pair);
+        emit timeout(taskIndex);
         if(!singShot)
         {
             nextExec = parser.getDateTime(cronJob).toTime_t();
             if(calcDiffTime() == 0)parser.setCall(true);
-            timerId = startTimer(calcDiffTime());
+            timerStart = startTimer(calcDiffTime());
         }
     }
 }
@@ -74,6 +84,19 @@ time_t Timer::calcDiffTime()
         return INT_MAX;
     return t;
 }
+
+//--
+Timer & Timer::operator = ( Timer const & obj )
+{
+    parser = obj.parser;
+    cronJob = obj.cronJob;
+    taskIndex = obj.taskIndex;
+    timerStart = obj.timerStart;
+    singShot = obj.singShot;
+    nextExec = obj.nextExec;
+    return *this;
+}
+
 
 //деструктор
 Timer::~Timer()

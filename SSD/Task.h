@@ -15,7 +15,11 @@
     taskArguments - аргументы задания
     priority - приоритет задания;
     status - статус задания;
-    id - идентификатор задачи в таблице БД.
+    id - идентификатор задачи в таблице БД$
+    single - переменная логического типа. Если задача
+             должна выполниться всего один раз,
+             значением перемменной является true,
+             иначе - false.
 
 методы класса:
     setStatus - метод устанавливает статус задачи;
@@ -65,10 +69,12 @@ class Task : public QObject
     Q_OBJECT
 public:
     explicit Task(const QSqlDatabase & db, QObject *parent = 0 );
+    Task (QObject *parent = 0);
     Task ( Task const & obj, QObject *parent = 0 );
     ~Task();
 
     void            setStatus ( int st );
+    void            setSingle ( bool sgl );
     void            setPriority ( int pr );
     void            setCronjob ( QString cron );
     void            setDevAddress ( QString devAddr );
@@ -84,10 +90,11 @@ public:
 
     int             getStatus ();
     int             getPriority ();
+    bool            getSingle ();   //--
 
     QString         getCronjob ();  //--
-    QString         getTask ();     //--
-    QString         getDevType();   //--
+    QString         getTask ();     //--?
+    QString         getDevType();   //--?
 
     void            print ();   //заглушка
 
@@ -107,6 +114,7 @@ private:
     int             priority,
                     status,
                     id;
+    bool            single;
 
     void        swap ( Task & obj );
     void        setIdFromBase();    //-

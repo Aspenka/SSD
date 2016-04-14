@@ -13,11 +13,13 @@ class CronParser : public QObject
 
 public:
     explicit CronParser(QObject *parent = 0);   //конструктор
+    CronParser ( CronParser & obj, QObject * parent = 0 );
     ~CronParser();  //деструктор
 
     QString getCronJob();   //метод возвращает cron-выражение
     QDateTime getDateTime(QString cron);    //метод возвращает время ближайшего вызова функции
     void setCall(bool var);
+    CronParser &        operator = ( CronParser const & obj );
 
 private:
     QString cronJob;            //cron-выражение

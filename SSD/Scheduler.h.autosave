@@ -33,12 +33,12 @@ public:
 
     void clear();   //очистить очередь заданий
 signals:
-    void callTask(int taskIndex);     //сигнал о начале выполнения нового задания
+    void sig_callTask(int taskIndex);     //сигнал о начале выполнения нового задания
 public slots:
     void start();   //метод-слот запускает планировщик
     void restart(); //перезапуск шедулера
     void stop();    //метод останавливает шщедулер
-    void slotReaction(int index);   //метод-слот, реагируюшщий на срабатывание таймера
+    void slt_Reaction(int index);   //метод-слот, реагируюшщий на срабатывание таймера
 };
 
 #endif // Scheduler_H

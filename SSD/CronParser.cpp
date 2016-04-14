@@ -2,6 +2,7 @@
 #include <iostream>
 #include <QStringList>
 #include <QRegExp>
+#include <QDebug>
 
 //конструктор
 CronParser::CronParser(QObject *parent) : QObject(parent)
@@ -9,6 +10,19 @@ CronParser::CronParser(QObject *parent) : QObject(parent)
     cronJob = "";
     cronDate = QDateTime::currentDateTime();
     isCalled = false;
+}
+
+CronParser::CronParser(CronParser &obj, QObject *parent)
+{
+    cronJob = obj.cronJob;
+    cronDate = obj.cronDate;
+    minute = obj.minute;
+    hour = obj.hour;
+    dayOfMonth = obj.dayOfMonth;
+    month = obj.month;
+    year = obj.year;
+    dayOfWeek = obj.dayOfWeek;
+    isCalled = obj.isCalled;
 }
 
 //метод возвращает cronJob
@@ -73,13 +87,16 @@ QDateTime CronParser::calcTaskDate()
             try
             {
                 if(crons.at(2) == "*")dayOfMonth.first = value;
-                else if(dayOfWeek.first != value)
+                else if(crons.at(4) == "*")dayOfMonth.first = value;
+                else if(dayOfMonth.first != value)
+                {
                     throw value;
+                }
             }
             catch(int)
             {
-                //std::cout << "[Scheduller]: Error: Invalid cronjob \"";
-                //std::cout << cronJob.toStdString() << "\". Day of week does not correspond with day of month\n";
+                std::cout << "[Scheduller]: Error: Invalid cronjob \"";
+                std::cout << cronJob.toStdString() << "\". Day of week does not correspond with day of month\n";
             }
 
             optimalDate.setDate(QDate(year.first, month.first, dayOfMonth.first));
@@ -220,6 +237,20 @@ QPair<int, bool> CronParser::parse(QString cronJob, int var, int minLimit, int m
 void CronParser::setCall(bool var)
 {
     isCalled = var;
+}
+
+CronParser & CronParser::operator = ( CronParser const & obj )
+{
+    cronJob = obj.cronJob;
+    cronDate = obj.cronDate;
+    minute = obj.minute;
+    hour = obj.hour;
+    dayOfMonth = obj.dayOfMonth;
+    month = obj.month;
+    year = obj.year;
+    dayOfWeek = obj.dayOfWeek;
+    isCalled = obj.isCalled;
+    return *this;
 }
 
 //деструктор

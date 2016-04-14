@@ -33,7 +33,7 @@ void TaskManager::run()
     {
         if ( !taskList.empty() )
         {
-            QObject::connect( &scheduler, SIGNAL(callTask(int)), this, SLOT(slt_Run(int)) );
+            QObject::connect( &scheduler, SIGNAL(sig_callTask(int)), this, SLOT(slt_Run(int)) );
             for ( int i = 0; i < taskList.size(); i++ )
             {
                 QObject::connect( &taskList[i], SIGNAL(sig_done(Task)), this, SLOT(slt_OnDone(Task)) );

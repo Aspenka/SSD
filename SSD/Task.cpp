@@ -8,9 +8,17 @@
 ======================================================*/
 Task::Task (const QSqlDatabase &db, QObject *parent ) : QObject ( parent )
 {
-    setStatus( NEW_TASK );
-    database = db;
     id = 0;
+    database = db;
+    setSingle ( false );
+    setStatus ( NEW_TASK );
+}
+
+Task::Task ( QObject *parent ) : QObject ( parent )
+{
+    id = 0;
+    setSingle ( false );
+    setStatus ( NEW_TASK );\
 }
 
 /*======================================================
@@ -29,6 +37,7 @@ Task::Task ( const Task &obj, QObject *parent) : QObject ( parent )
     status = obj.status;
     id = obj.id;
     database = obj.database;
+    single = obj.single;
 }
 
 /*======================================================
@@ -119,6 +128,12 @@ void Task::setStatus ( int st )
     status = st;
 }
 
+//--
+void Task::setSingle(bool sgl)
+{
+    single = sgl;
+}
+
 /*======================================================
 метод устанавливает задачу
 
@@ -153,6 +168,12 @@ int Task::getStatus ()
 }
 
 //--
+bool Task::getSingle()
+{
+    return single;
+}
+
+//--
 QString Task::getCronjob()
 {
     return cronjob;
@@ -175,23 +196,36 @@ QString Task::getDevType()
 ======================================================*/
 void Task::removeTask ()
 {
-    if ( database.open() )
+    try
     {
-        QSqlQuery *query = new QSqlQuery ( database );
-        QString str = "DELETE FROM tasks WHERE task_id = :id";
-        query->prepare(str);
-        query->bindValue(":id", id);
-
-        if ( query->exec() )
+        if ( database.open() )
         {
-            qDebug() <<  "[Task.removeTask()]:  Record " << id << " deleted";
+            QSqlQuery *query = new QSqlQuery ( database );
+            QString str = "DELETE FROM tasks WHERE task_id = :id";
+            query->prepare(str);
+            query->bindValue(":id", id);
+            try
+            {
+                if ( query->exec() )
+                {
+                    qDebug() <<  "[Task.removeTask()]:  Record " << id << " deleted";
+                }
+                else
+                {
+                    throw query;
+                }
+            }
+            catch (QSqlQuery *)
+            {
+                qDebug() << "[Task.removeTask()]:    Query failed! " << query->lastError();
+            }
         }
         else
         {
-            qDebug() << "[Task.removeTask()]:    Query failed! " << query->lastError();
+            throw database;
         }
     }
-    else
+    catch (QSqlDatabase)
     {
         qDebug() << "[Task.removeTask()]:    Error connecting to database!";
     }
@@ -202,26 +236,40 @@ void Task::removeTask ()
 ======================================================*/
 void Task::writeTask ()
 {
-    if( database.open() )
+    try
     {
-        QSqlQuery *query = new QSqlQuery ( database );
-        QString str = "INSERT INTO tasks (cronjob, dev_address, dev_type, login, password,"
-                      " task, task_arg, priority, status) VALUES (:cron, :devAddr, :devType, :login,"
-                      " :pass, :task, :taskArg, :pr, :st)";
-
-        query->prepare(str);
-        query = bindValues( query );
-        if(query->exec())
+        if( database.open() )
         {
-            setIdFromBase();
-            qDebug() << "[Task.writeTask()]:    Data recording is successful";
+            QSqlQuery *query = new QSqlQuery ( database );
+            QString str = "INSERT INTO tasks (cronjob, dev_address, dev_type, login, password,"
+                          " task, task_arg, priority, status) VALUES (:cron, :devAddr, :devType, :login,"
+                          " :pass, :task, :taskArg, :pr, :st)";
+
+            query->prepare(str);
+            query = bindValues( query );
+            try
+            {
+                if(query->exec())
+                {
+                    setIdFromBase();
+                    qDebug() << "[Task.writeTask()]:    Data recording is successful";
+                }
+                else
+                {
+                    throw query;
+                }
+            }
+            catch (QSqlQuery *)
+            {
+                qDebug() << "[Task.writeTask()]:    Query failed! " << query->lastError();
+            }
         }
         else
         {
-            qDebug() << "[Task.writeTask()]:    Query failed! " << query->lastError();
+            throw database;
         }
     }
-    else
+    catch (QSqlDatabase)
     {
         qDebug() << "[Task.writeTask()]:    Error connecting to database!";
     }
@@ -261,23 +309,37 @@ QSqlQuery * Task::bindValues(QSqlQuery * & query)
 //-
 void Task::setIdFromBase()
 {
-    if( database.open() )
+    try
     {
-        QSqlQuery *query = new QSqlQuery ( database );
-        QString str = "SELECT MAX(task_id) FROM tasks";
-        if ( query->exec(str) )
+        if( database.open() )
         {
-            while ( query->next() )
+            QSqlQuery *query = new QSqlQuery ( database );
+            QString str = "SELECT MAX(task_id) FROM tasks";
+            try
             {
-                setID ( query->value( 0 ).toInt() );
+                if ( query->exec(str) )
+                {
+                    while ( query->next() )
+                    {
+                        setID ( query->value( 0 ).toInt() );
+                    }
+                }
+                else
+                {
+                    throw query;
+                }
+            }
+            catch (QSqlQuery *)
+            {
+                qDebug() << "[setIdFromBase()]:    Query failed! " << query->lastError();
             }
         }
         else
         {
-            qDebug() << "[setIdFromBase()]:    Query failed! " << query->lastError();
+            throw database;
         }
     }
-    else
+    catch (QSqlDatabase)
     {
         qDebug() << "[setIdFromBase()]:    Error connecting to database!";
     }
@@ -290,50 +352,70 @@ void Task::setIdFromBase()
 ======================================================*/
 void Task::editTask (int st, int pr)
 {
-    if( database.open() )
+    try
     {
-        QSqlQuery *query = new QSqlQuery ( database );
-        QString str = "";
+        if( database.open() )
+        {
+            QSqlQuery *query = new QSqlQuery ( database );
+            QString str = "";
 
-        if ( (pr == 0) && (st == 0) )
-        {
-            return;
-        }
-        if ( (pr== 0) && (st != 0) )
-        {
-            if ( status == DONE )
+            if ( (pr == 0) && (st == 0) )
             {
-                emit sig_done( * this );
                 return;
             }
-            str = "UPDATE tasks SET status = :st WHERE task_id = :id";
-        }
-        if ( (pr != 0) && (st == 0) )
-        {
-            str = "UPDATE tasks SET priority = :pr WHERE task_id = :id";
-        }
-        if ( (pr != 0) && (st != 0) )
-        {
-            str = "UPDATE tasks SET status = :st, priority = :pr WHERE task_id = :id";
-        }
+            if ( (pr== 0) && (st != 0) )
+            {
+                if ( status == DONE )
+                {
+                    emit sig_done( * this );
+                    return;
+                }
+                str = "UPDATE tasks SET status = :st WHERE task_id = :id";
+            }
+            if ( (pr != 0) && (st == 0) )
+            {
+                str = "UPDATE tasks SET priority = :pr WHERE task_id = :id";
+            }
+            if ( (pr != 0) && (st != 0) )
+            {
+                if ( status == DONE )
+                {
+                    qDebug() << "Emit DONE!";
+                    emit sig_done( * this );
+                    return;
+                }
+                str = "UPDATE tasks SET status = :st, priority = :pr WHERE task_id = :id";
+            }
 
-        query->prepare( str );
-        query->bindValue(":st", status);
-        query->bindValue(":pr", priority);
-        query->bindValue(":id", id);
+            query->prepare( str );
+            query->bindValue(":st", status);
+            query->bindValue(":pr", priority);
+            query->bindValue(":id", id);
 
-        if ( query->exec() )
-        {
-            qDebug() << "[Task.editTask()]: Record " << id << " changed";
+            try
+            {
+                if ( query->exec() )
+                {
+                    qDebug() << "[Task.editTask()]: Record " << id << " changed";
+                }
+                else
+                {
+                    throw query;
+                }
+            }
+            catch (QSqlQuery *)
+            {
+                qDebug() << "[Task.editTask()]: Query failed! " << query->lastError();
+            }
         }
         else
         {
-            qDebug() << "[Task.editTask()]: Query failed! " << query->lastError();
+            throw database;
         }
     }
-    else
+    catch (QSqlDatabase)
     {
-        qDebug() << "[Task.editTask()]: Error connecting to database!";
+       qDebug() << "[Task.editTask()]: Error connecting to database!";
     }
 }
 
@@ -378,6 +460,7 @@ void Task::swap ( Task & obj )
     std::swap ( status, obj.status );
     std::swap ( id, obj.id );
     std::swap ( database, obj.database );
+    std::swap ( single, obj.single );
 }
 
 /*======================================================
@@ -409,7 +492,8 @@ bool Task::operator == ( const Task &right )
          ( task == right.task ) &&
          ( taskArguments == right.taskArguments ) &&
          ( priority == right.priority ) &&
-         ( status == right.status ))
+         ( status == right.status ) &&
+         ( single == right.single))
     {
         return true;
     }
