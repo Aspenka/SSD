@@ -6,10 +6,17 @@ INPUT(
 ./debug\Timer.o
 ./debug\CronParser.o
 ./debug\Server.o
+./debug\Model.o
+./debug\Query.o
+./debug\TableSchema.o
+./debug\TaskModel.o
 ./debug\moc_Task.o
 ./debug\moc_TaskManager.o
 ./debug\moc_Scheduler.o
 ./debug\moc_Timer.o
 ./debug\moc_CronParser.o
 ./debug\moc_Server.o
+./debug\moc_Model.o
+./debug\moc_Query.o
+./debug\moc_TableSchema.o
 );

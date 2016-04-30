@@ -2,8 +2,7 @@
 #define TASKMANAGER_H
 
 #include <QObject>
-#include <QList>
-#include <QtSql>       
+#include <QList>       
 #include "Task.h"
 #include "Scheduler.h"
 
@@ -28,7 +27,7 @@
                   индексу;
     removeTask - метод удаляет задачу из списка по
                  содержимому;
-    clear - метод очщает перечень задач;
+    clear - метод очищает перечень задач;
     handleTask - метод запускает задачу в обработку;   
 
 сигналы класса:
@@ -51,25 +50,20 @@ public:
     void                removeTask ( int index );
     void                removeTask ( Task task );
     void                clear ();
-    void                handleTask ();
     void                print ();       //заглушка
     void                run ();         //заглушка
 
 private:
     QList <Task>        taskList;
     Scheduler           scheduler;
-    QSqlDatabase        database;
     int                 limit;  //--
 
     void                updateTask ( int index, int status = 0, int priority = 0 );
     void                parse ( QByteArray data );
+    void                handleTask ();
     void                sortTasklist (QList<Task> &list, int left, int right);
     void                parse ();           //заглушка
-    Task                parseArgs(Task & task, QList <QString> argList); //заглушка
     void                setConfig();        //--
-    void                checkTaskTable();   //--
-    void                clearTaskTable();   //--
-    int                 getIndex(Task task);//--
 
 signals:
 

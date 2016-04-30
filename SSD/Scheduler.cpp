@@ -38,6 +38,8 @@ void Scheduler::remove(Task &oneTsk)
     {
         if ( taskList[i] == oneTsk )
         {
+            disconnect(timer[i], SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
+            timer.remove(i, 1);
             remove ( i );
         }
     }
@@ -46,8 +48,9 @@ void Scheduler::remove(Task &oneTsk)
 void Scheduler::remove(int index)
 {
     qDebug() << "[Scheduler]:   timer " <<  index << " Stopped";
-    taskList.removeAt(index);
+    disconnect(timer[index], SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
     timer.remove(index, 1);
+    taskList.removeAt(index);
 }
 
 //очистить вектор срабатываний
@@ -64,7 +67,7 @@ void Scheduler::start()
     {
         Timer *t = new Timer();
         timer.append(t);
-        connect (timer.at(i), SIGNAL(timeout(int)), this, SLOT(slotReaction(int)));
+        connect (timer.at(i), SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
         if(taskList[i].getSingle() == true)
         {
             timer[i]->setSingleShot(true);
@@ -80,7 +83,7 @@ void Scheduler::stop()
     for( int i = 0; i < timer.size(); i++)
     {
         timer[i]->stop();
-        disconnect(timer[i], SIGNAL(timeout(int)), this, SLOT(slotReaction(int)));
+        disconnect(timer[i], SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
     }
 }
 
@@ -91,9 +94,9 @@ void Scheduler::restart()
 }
 
 //метод вызывает процедуры с нужным именем по таймауту таймера
-void Scheduler::slotReaction(int index)
+void Scheduler::slt_Reaction(int index)
 {
-    emit callTask(index);
+    emit sig_callTask(index);
 }
 
 //деструктор

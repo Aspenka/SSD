@@ -10,6 +10,7 @@ void Server::startServer ( )
 {
     taskMan = new TaskManager ( );
     taskMan->run();
+    //taskMan->print();
 }
 
 Server::~Server ( )

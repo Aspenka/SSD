@@ -15,14 +15,17 @@ CONFIG   += c++11
 
 TEMPLATE = app
 
-
 SOURCES += main.cpp \
     Task.cpp \
     TaskManager.cpp \
     Scheduler.cpp \
     Timer.cpp \
     CronParser.cpp \
-    Server.cpp
+    Server.cpp \
+    Model.cpp \
+    Query.cpp \
+    TableSchema.cpp \
+    TaskModel.cpp
 
 HEADERS += \
     Task.h \
@@ -30,4 +33,8 @@ HEADERS += \
     Scheduler.h \
     Timer.h \
     CronParser.h \
-    Server.h
+    Server.h \
+    Model.h \
+    Query.h \
+    TableSchema.h \
+    TaskModel.h

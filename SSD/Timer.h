@@ -9,8 +9,6 @@
 #include <mutex>
 #include "CronParser.h"
 
-//#define taskPair_t        QPair <QString, int>
-
 class Timer : public QObject
 {
     Q_OBJECT

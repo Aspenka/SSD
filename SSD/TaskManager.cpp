@@ -21,19 +21,19 @@ TaskManager::TaskManager (QByteArray data, QObject *parent) : QObject ( parent )
 //заглушка
 void TaskManager::run()
 {
-    database = QSqlDatabase::addDatabase("QSQLITE", "dbConnection");
-    database.setDatabaseName("base.db");
-
-    clearTaskTable();
-    //checkTaskTable();------------------
+    Task task;
+    if(!task.isEmpty())
+    {
+        taskList.append(task.getTaskList());
+    }
     setConfig();
-    parse ( );  //--
+    //parse ( );  //--
 
     try
     {
         if ( !taskList.empty() )
         {
-            QObject::connect( &scheduler, SIGNAL(callTask(int)), this, SLOT(slt_Run(int)) );
+            QObject::connect( &scheduler, SIGNAL(sig_callTask(int)), this, SLOT(slt_Run(int)) );
             for ( int i = 0; i < taskList.size(); i++ )
             {
                 QObject::connect( &taskList[i], SIGNAL(sig_done(Task)), this, SLOT(slt_OnDone(Task)) );
@@ -88,7 +88,7 @@ void TaskManager::sortTasklist(QList<Task> & list, int left, int right)
     int i = left;
     int j = right;
     int p;
-    Task temp ( database );
+    Task temp;
     p = list[(left + right )/2].getPriority();
     do
     {
@@ -128,7 +128,8 @@ void TaskManager::sortTasklist(QList<Task> & list, int left, int right)
 ======================================================*/
 void TaskManager::removeTask ( int index )
 {
-    taskList[index].removeTask();
+    taskList[index].remove();
+    scheduler.remove(index);
     taskList.removeAt(index);
 }
 
@@ -144,7 +145,8 @@ void TaskManager::removeTask ( Task task )
     {
         if ( taskList[i] == task )
         {
-            taskList[i].removeTask();
+            taskList[i].remove();
+            scheduler.remove(i);
             taskList.removeAt(i);
             break;
         }
@@ -174,7 +176,6 @@ void TaskManager::handleTask ()
     }
     sortTasklist(taskList, 0, taskList.size() - 1);
     scheduler.append(taskList);
-
     scheduler.start();
 }
 
@@ -190,15 +191,7 @@ void TaskManager::handleTask ()
 ======================================================*/
 void TaskManager::updateTask ( int index, int status, int priority )
 {
-    if ( status !=0 )
-    {
-        taskList[index].setStatus( status );
-    }
-    if ( priority != 0 )
-    {
-        taskList[index].setPriority( priority );
-    }
-    taskList[index].editTask(status, priority);
+    taskList[index].edit(status, priority);
 }
 
 /*======================================================
@@ -213,7 +206,7 @@ void TaskManager::parse ( QByteArray data )
 }
 
 //заглушка
-void TaskManager::parse ( )
+void TaskManager::parse()
 {
     QSettings set( "tasks.ini", QSettings::IniFormat );
     int size = set.beginReadArray("tasks");
@@ -224,7 +217,7 @@ void TaskManager::parse ( )
             for ( int i = 0; i < size; i++ )
             {
                 set.setArrayIndex( i );
-                Task task ( database );
+                Task task;
                 task.setCronjob ( set.value("cronjob").toString() );
                 task.setDevAddress ( set.value("devAddr").toString() );
                 task.setDevType ( set.value("devType").toString() );
@@ -232,20 +225,25 @@ void TaskManager::parse ( )
                 task.setPassword ( set.value("password").toString() );
                 task.setTask ( set.value("task").toString() );
                 task.setPriority( set.value("priority").toInt() );
-
                 QString temp = set.value("arguments").toString();
                 QStringList list;
                 if(temp != "")
                 {
-                    list = temp.split(",");
+                    if(temp.contains(","))
+                    {
+                        list = temp.split(",");
+                    }
+                    else
+                    {
+                        list.append(temp);
+                    }
                     task.setArgums(list);
-                    task = parseArgs( task, list );
                 }
                 else
                 {
                     task.setArgums(list);
                 }
-                task.writeTask();
+                task.save();
                 addTask( task );
             }
         }
@@ -261,19 +259,6 @@ void TaskManager::parse ( )
 }
 
 //заглушка
-Task TaskManager::parseArgs(Task &task, QList<QString> argList)
-{
-    for ( int i = 0; i < argList.size(); i++ )
-    {
-        if ( argList[i] == "single" )
-        {
-            task.setSingle( true );
-        }
-    }
-    return task;
-}
-
-//заглушка
 void TaskManager::print()
 {
     for( int i=0; i<taskList.size(); i++ )
@@ -284,127 +269,8 @@ void TaskManager::print()
 }
 
 //--
-void TaskManager::clearTaskTable()
-{
-    try
-    {
-        if ( database.open() )
-        {
-            QSqlQuery * query = new QSqlQuery ( database );
-            QString str = "DELETE   FROM tasks";
-            try
-            {
-                if ( query->exec(str) )
-                {
-                    qDebug() << "TaskManager.clearTaskTable()]:  table cleared";
-                }
-                else
-                {
-                    throw query;
-                }
-
-                query->clear();
-                str.clear();
-                str = "DELETE FROM sqlite_sequence WHERE name = 'tasks'";
-                if ( !query->exec(str) )
-                {
-                    throw query;
-                }
-            }
-            catch (QSqlQuery *)
-            {
-                qDebug() << "[TaskManager.clearTaskTable()]:  Query failed! " << query->lastError();
-            }
-        }
-        else
-        {
-            throw database;
-        }
-    }
-    catch (QSqlDatabase)
-    {
-        qDebug() << "[TaskManager.clearTaskTable()]:  Error connecting to database!";
-    }
-}
-
-//--
-void TaskManager::checkTaskTable()
-{
-    try
-    {
-        if ( database.open() )
-        {
-            bool empty = true;
-            QSqlQuery * query = new QSqlQuery ( database );
-            QString str = "SELECT COUNT(task_id) FROM tasks";
-            try
-            {
-                if ( query->exec(str) )
-                {
-                    int res = 0;
-                    while ( query->next() )
-                    {
-                        res = query->value(0).toInt();
-                    }
-                    if ( res != 0 )
-                    {
-                        empty = false;
-                    }
-                }
-                else
-                {
-                    throw query;
-                }
-
-                if ( empty != true )
-                {
-                    query->clear();
-                    str.clear();
-                    str = "SELECT * FROM tasks";
-                    if ( query->exec(str) )
-                    {
-                        while ( query->next() )
-                        {
-                            Task task ( database );
-                            task.setID( query->value(0).toInt() );
-                            task.setCronjob( query->value(1).toString() );
-                            task.setDevAddress( query->value(2).toString() );
-                            task.setDevType( query->value(3).toString() );
-                            task.setLogin( query->value(4).toString() );
-                            task.setPassword( query->value(5).toString() );
-                            task.setTask( query->value(6).toString() );
-                            task.setArgums( query->value(7).toStringList() );
-                            task.setPriority( query->value(8).toInt() );
-                            task.setStatus( query->value(9).toInt() );
-                            addTask(task);
-                        }
-                    }
-                    else
-                    {
-                        throw query;
-                    }
-                }
-            }
-            catch (QSqlQuery *)
-            {
-                qDebug() << "[TaskManager.checkTaskTable()]:  Query failed! " << query->lastError();
-            }
-        }
-        else
-        {
-            throw database;
-        }
-    }
-    catch (QSqlDatabase)
-    {
-        qDebug() << "[TaskManager.checkTaskTable()]:  Error connecting to database!";
-    }
-}
-
-//--
 void TaskManager::slt_OnDone(Task task)
 {
-    scheduler.remove( getIndex(task) );
     removeTask( task );
     sortTasklist(taskList, 0, taskList.size() - 1);
 }
@@ -423,20 +289,6 @@ void TaskManager::slt_Run (int index)
     {
         updateTask(index, DONE);
     }
-}
-
-
-//--
-int TaskManager::getIndex( Task task )
-{
-    for ( int i = 0; i < taskList.size(); i++ )
-    {
-        if ( taskList[i] == task )
-        {
-            return i;
-        }
-    }
-    return -1;
 }
 
 /*======================================================

@@ -6,10 +6,17 @@ INPUT(
 ./release\Timer.o
 ./release\CronParser.o
 ./release\Server.o
+./release\Model.o
+./release\Query.o
+./release\TableSchema.o
+./release\TaskModel.o
 ./release\moc_Task.o
 ./release\moc_TaskManager.o
 ./release\moc_Scheduler.o
 ./release\moc_Timer.o
 ./release\moc_CronParser.o
 ./release\moc_Server.o
+./release\moc_Model.o
+./release\moc_Query.o
+./release\moc_TableSchema.o
 );

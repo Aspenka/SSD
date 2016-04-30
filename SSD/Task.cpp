@@ -1,30 +1,20 @@
-#include <QDebug>
-#include <QSqlQuery>
-#include <stdlib.h>
-#include "Task.h"
+#include "task.h"
+#include <QVariant>
 
-/*======================================================
-конструктор класса
-======================================================*/
-Task::Task (const QSqlDatabase &db, QObject *parent ) : QObject ( parent )
+Task::Task(QObject *parent) : QObject(parent)
 {
-    id = 0;
-    database = db;
-    setSingle ( false );
-    setStatus ( NEW_TASK );
+    setSingle(false);
+    setStatus(NEW_TASK);
+    query = new Query(TaskModel::getTableSchema());
+    model = new TaskModel(query->getEmpty());
 }
 
-Task::Task ( QObject *parent ) : QObject ( parent )
+Task::Task(const Task &obj, QObject *parent) : QObject(parent)
 {
-    id = 0;
-    setSingle ( false );
-    setStatus ( NEW_TASK );\
+    copy(obj);
 }
 
-/*======================================================
-конструктор копирования
-======================================================*/
-Task::Task ( const Task &obj, QObject *parent) : QObject ( parent )
+void Task::copy(const Task &obj)
 {
     cronjob = obj.cronjob;
     deviceAddress = obj.deviceAddress;
@@ -35,139 +25,108 @@ Task::Task ( const Task &obj, QObject *parent) : QObject ( parent )
     taskArguments = obj.taskArguments;
     priority = obj.priority;
     status = obj.status;
-    id = obj.id;
-    database = obj.database;
     single = obj.single;
+    taskID = obj.taskID;
+    model = obj.model;
+    query = obj.query;
 }
 
-/*======================================================
-метод устанавливает аргументы задачи
-
-параметры метода:
-    QStringList args - список аргументов задачи
-======================================================*/
-void Task::setArgums ( QStringList args )
+bool Task::operator == ( const Task &right )
 {
-    taskArguments = args;
+    if ( ( cronjob == right.cronjob ) &&
+         ( deviceAddress == right.deviceAddress ) &&
+         ( deviceType == right.deviceType ) &&
+         ( login == right.login ) &&
+         ( password == right.password ) &&
+         ( task == right.task ) &&
+         ( taskArguments == right.taskArguments ) &&
+         ( priority == right.priority ) &&
+         ( status == right.status ) &&
+         ( single == right.single) &&
+         ( taskID == right.taskID) &&
+         ( model == right.model) &&
+         ( query == right.query))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
-/*======================================================
-метод устанавливает cron-выражение задачи
-
-параметры метода:
-    QString cron - строка cron-выражения
-======================================================*/
-void Task::setCronjob ( QString cron )
+bool Task::operator != ( const Task & right )
 {
-    cronjob = cron;
+    return !( this == & right );
 }
 
-/*======================================================
-метод устанавливает адрес подключаемого устройства
-
-параметры метода:
-    QString devAddr - адрес устройства
-======================================================*/
-void Task::setDevAddress ( QString devAddr )
+Task & Task::operator = ( Task const & obj )
 {
-    deviceAddress = devAddr;
+    copy(obj);
+    return *this;
 }
 
-/*======================================================
-метод устанавливает тип подключаемого устройства
-
-параметры метода:
-    QString devTypr - тип устройства
-======================================================*/
-void Task::setDevType ( QString devType )
+void Task::setStatus(int st)
 {
-    deviceType = devType;
+    status = st;    
 }
 
-/*======================================================
-метод устанавливает логин подключения к УСПД
-
-параметры метода:
-    QString lgn - логин
-======================================================*/
-void Task::setLogin ( QString lgn )
-{
-    login = lgn;
-}
-
-/*======================================================
-метод устанавливает пароль подключения к УСПД
-
-параметры метода:
-    QString pass - пароль
-======================================================*/
-void Task::setPassword ( QString pass )
-{
-    password = pass;
-}
-
-/*======================================================
-метод устанавливает приоритет задания
-
-параметры метода:
-    int pr - приоритет задачи
-======================================================*/
-void Task::setPriority ( int pr )
-{
-    priority = pr;
-}
-
-/*======================================================
-метод устанавливает статус задания
-
-параметры метода:
-    int st - статус задачи
-======================================================*/
-void Task::setStatus ( int st )
-{
-    status = st;
-}
-
-//--
 void Task::setSingle(bool sgl)
 {
     single = sgl;
 }
 
-/*======================================================
-метод устанавливает задачу
+void Task::setPriority(int pr)
+{
+    priority = pr;
+}
 
-параметры метода:
-    QString tsk - строка, описывающая задачу
-======================================================*/
-void Task::setTask ( QString tsk )
+void Task::setCronjob(QString cron)
+{
+    cronjob = cron;
+}
+
+void Task::setDevAddress(QString devAddr)
+{
+    deviceAddress = devAddr;
+}
+
+void Task::setDevType(QString devType)
+{
+    deviceType = devType;
+}
+
+void Task::setLogin(QString lgn)
+{
+    login = lgn;    
+}
+
+void Task::setPassword(QString pass)
+{
+    password = pass;
+}
+
+void Task::setTask(QString tsk)
 {
     task = tsk;
 }
 
-//--
-void Task::setID(int baseID)
+void Task::setArgums(QStringList args)
 {
-    id = baseID;
+    taskArguments = args;
+    *this = parseArgs(*this, args);
 }
 
-/*======================================================
-метод возвращает приоритет задачи
-======================================================*/
-int Task::getPriority ()
+void Task::setID(int id)
+{
+    taskID = id;
+}
+
+int Task::getPriority()
 {
     return priority;
 }
 
-/*======================================================
-метод возвращает статус задачи
-======================================================*/
-int Task::getStatus ()
-{
-    return status;
-}
-
-//--
 bool Task::getSingle()
 {
     return single;
@@ -191,332 +150,169 @@ QString Task::getDevType()
     return deviceType;
 }
 
-/*======================================================
-метод удаляет задачу из БД
-======================================================*/
-void Task::removeTask ()
+void Task::save()
 {
-    try
-    {
-        if ( database.open() )
-        {
-            QSqlQuery *query = new QSqlQuery ( database );
-            QString str = "DELETE FROM tasks WHERE task_id = :id";
-            query->prepare(str);
-            query->bindValue(":id", id);
-            try
-            {
-                if ( query->exec() )
-                {
-                    qDebug() <<  "[Task.removeTask()]:  Record " << id << " deleted";
-                }
-                else
-                {
-                    throw query;
-                }
-            }
-            catch (QSqlQuery *)
-            {
-                qDebug() << "[Task.removeTask()]:    Query failed! " << query->lastError();
-            }
-        }
-        else
-        {
-            throw database;
-        }
-    }
-    catch (QSqlDatabase)
-    {
-        qDebug() << "[Task.removeTask()]:    Error connecting to database!";
-    }
-}
-
-/*======================================================
-метод записывает задачу в БД
-======================================================*/
-void Task::writeTask ()
-{
-    try
-    {
-        if( database.open() )
-        {
-            QSqlQuery *query = new QSqlQuery ( database );
-            QString str = "INSERT INTO tasks (cronjob, dev_address, dev_type, login, password,"
-                          " task, task_arg, priority, status) VALUES (:cron, :devAddr, :devType, :login,"
-                          " :pass, :task, :taskArg, :pr, :st)";
-
-            query->prepare(str);
-            query = bindValues( query );
-            try
-            {
-                if(query->exec())
-                {
-                    setIdFromBase();
-                    qDebug() << "[Task.writeTask()]:    Data recording is successful";
-                }
-                else
-                {
-                    throw query;
-                }
-            }
-            catch (QSqlQuery *)
-            {
-                qDebug() << "[Task.writeTask()]:    Query failed! " << query->lastError();
-            }
-        }
-        else
-        {
-            throw database;
-        }
-    }
-    catch (QSqlDatabase)
-    {
-        qDebug() << "[Task.writeTask()]:    Error connecting to database!";
-    }
-}
-
-//--
-QString Task::toString ( QStringList list )
-{
-    QString result = "";
-    if(!list.empty())
-    {
-        for ( int i = 0; i < list.size(); i++ )
-        {
-            result += list.at(i);
-            result += ",";
-        }
-    }
-    return result;
-}
-
-//--
-QSqlQuery * Task::bindValues(QSqlQuery * & query)
-{
-    query->bindValue ( ":cron", cronjob );
-    query->bindValue ( ":devAddr", deviceAddress );
-    query->bindValue ( ":devType", deviceType );
-    query->bindValue ( ":login", login );
-    query->bindValue ( ":pass", password );
-    query->bindValue ( ":task", task );
-    query->bindValue ( ":pr", priority );
-    query->bindValue ( ":st", status );
-    QString args = toString ( taskArguments );
-    query->bindValue ( ":taskArg", args );
-    return query;
-}
-
-//-
-void Task::setIdFromBase()
-{
-    try
-    {
-        if( database.open() )
-        {
-            QSqlQuery *query = new QSqlQuery ( database );
-            QString str = "SELECT MAX(task_id) FROM tasks";
-            try
-            {
-                if ( query->exec(str) )
-                {
-                    while ( query->next() )
-                    {
-                        setID ( query->value( 0 ).toInt() );
-                    }
-                }
-                else
-                {
-                    throw query;
-                }
-            }
-            catch (QSqlQuery *)
-            {
-                qDebug() << "[setIdFromBase()]:    Query failed! " << query->lastError();
-            }
-        }
-        else
-        {
-            throw database;
-        }
-    }
-    catch (QSqlDatabase)
-    {
-        qDebug() << "[setIdFromBase()]:    Error connecting to database!";
-    }
-}
-
-/*======================================================
-метод редактирует задачу в БД
-примечание: редактировать позволено только статус и
-            приритет задачи
-======================================================*/
-void Task::editTask (int st, int pr)
-{
-    try
-    {
-        if( database.open() )
-        {
-            QSqlQuery *query = new QSqlQuery ( database );
-            QString str = "";
-
-            if ( (pr == 0) && (st == 0) )
-            {
-                return;
-            }
-            if ( (pr== 0) && (st != 0) )
-            {
-                if ( status == DONE )
-                {
-                    emit sig_done( * this );
-                    return;
-                }
-                str = "UPDATE tasks SET status = :st WHERE task_id = :id";
-            }
-            if ( (pr != 0) && (st == 0) )
-            {
-                str = "UPDATE tasks SET priority = :pr WHERE task_id = :id";
-            }
-            if ( (pr != 0) && (st != 0) )
-            {
-                if ( status == DONE )
-                {
-                    qDebug() << "Emit DONE!";
-                    emit sig_done( * this );
-                    return;
-                }
-                str = "UPDATE tasks SET status = :st, priority = :pr WHERE task_id = :id";
-            }
-
-            query->prepare( str );
-            query->bindValue(":st", status);
-            query->bindValue(":pr", priority);
-            query->bindValue(":id", id);
-
-            try
-            {
-                if ( query->exec() )
-                {
-                    qDebug() << "[Task.editTask()]: Record " << id << " changed";
-                }
-                else
-                {
-                    throw query;
-                }
-            }
-            catch (QSqlQuery *)
-            {
-                qDebug() << "[Task.editTask()]: Query failed! " << query->lastError();
-            }
-        }
-        else
-        {
-            throw database;
-        }
-    }
-    catch (QSqlDatabase)
-    {
-       qDebug() << "[Task.editTask()]: Error connecting to database!";
-    }
-}
-
-//заглушка
-void Task::print ()
-{
-    qDebug() << "ID: " << id;
-    qDebug() << "cronjob: " << cronjob;
-    qDebug() << "device address: " << deviceAddress;
-    qDebug() << "device type: " << deviceType;
-    qDebug() << "login: " << login;
-    qDebug() << "password: " << password;
-    qDebug() << "task: " << task;
+    model->setIsNew(true);
+    model->setField("status", status);
+    model->setField("priority", priority);
+    model->setField("cronjob", cronjob);
+    model->setField("dev_address", deviceAddress);
+    model->setField("dev_type", deviceType);
+    model->setField("login", login);
+    model->setField("password", password);
+    model->setField("task", task);
     if(!taskArguments.empty())
     {
-        qDebug() << "Arguments: ";
+        model->setField("task_arg", toString(taskArguments));
+    }
+    else
+    {
+        model->setField("task_arg", "");
+    }
+    if(model->save())
+    {
+        qDebug() << "[Task::save]:\tData recorded";
+        setID(query->getlastID().toInt());
+        model->setField("task_id", taskID);
+    }
+}
+
+void Task::remove()
+{
+    if(model->remove())
+    {
+        qDebug() << "[Task::remove]:\tRecord deleted";
+    }
+}
+
+void Task::edit(int taskStatus, int taskPriority)
+{
+    QStringList list = model->getFields();
+    list.removeOne("task_id");
+    if((taskStatus == 0) && (taskPriority !=0))
+    {
+        setPriority(taskPriority);
+        model->setField("priority", priority);
+    }
+    if((taskStatus != 0) && (taskPriority == 0))
+    {
+        setStatus(taskStatus);
+        model->setField("status", status);
+    }
+    if((taskStatus != 0) && (taskPriority != 0))
+    {
+        setPriority(taskPriority);
+        setStatus(taskStatus);
+        model->setField("priority", priority);
+        model->setField("status", status);
+    }
+    if(model->save(list))
+    {
+        qDebug() << "[Task::edit]:\tRecord is changed";
+    }
+    if(status == DONE)
+    {
+        emit sig_done(*this);
+    }
+}
+
+//--
+void Task::print()
+{
+    qDebug() << "ID:\t" << taskID;
+    qDebug() << "cronjob:\t" << cronjob;
+    qDebug() << "device address:\t" << deviceAddress;
+    qDebug() << "device type:\t" << deviceType;
+    qDebug() << "login:\t" << login;
+    qDebug() << "password:\t" << password;
+    qDebug() << "task:\t" << task;
+    if(!taskArguments.empty())
+    {
+        qDebug() << "Arguments:\t";
         for( int i = 0; i < taskArguments.size(); i++ )
-            qDebug() << "arg " << i << ": " << taskArguments.at(i);
+        {
+            qDebug() << "arg\t" << i << ": " << taskArguments.at(i);
+        }
     }
     else
     {
         qDebug() << "Arguments: none";
     }
-    qDebug() << "status: " << status;
-    qDebug() << "priority: " << priority;
+    qDebug() << "status:\t" << status;
+    qDebug() << "priority:\t" << priority;
+    qDebug() << "single:\t" << single;
 }
 
-/*======================================================
-метод предназнчаен для копирования атрибутов одного
-объекта класса Task в другой объект класса Task
-======================================================*/
-void Task::swap ( Task & obj )
+bool Task::isEmpty()
 {
-    std::swap ( cronjob, obj.cronjob );
-    std::swap ( deviceAddress, obj.deviceAddress );
-    std::swap ( deviceType, obj.deviceType );
-    std::swap ( login, obj.login );
-    std::swap ( password, obj.password );
-    std::swap ( task, obj.task );
-    std::swap ( taskArguments, obj.taskArguments );
-    std::swap ( priority, obj.priority );
-    std::swap ( status, obj.status );
-    std::swap ( id, obj.id );
-    std::swap ( database, obj.database );
-    std::swap ( single, obj.single );
-}
-
-/*======================================================
-метод перегружает оператор = (оператор присваивания),
-позволяя присваивать объекту Task значение другого
-объекта Task
-======================================================*/
-Task & Task::operator = ( Task const & obj )
-{
-    if( this != & obj )
-    {
-        Task ( obj ).swap( * this );
-    }
-    return *this;
-}
-
-/*======================================================
-метод перегружает оператор == (оператор сравнения),
-позволяя сравнивать между собой объекты типа Task.
-Если объекты равны, метод возвращает true, иначе - false
-======================================================*/
-bool Task::operator == ( const Task &right )
-{
-    if ( ( cronjob == right.cronjob ) &&
-         ( deviceAddress == right.deviceAddress ) &&
-         ( deviceType == right.deviceType ) &&
-         ( login == right.login ) &&
-         ( password == right.password ) &&
-         ( task == right.task ) &&
-         ( taskArguments == right.taskArguments ) &&
-         ( priority == right.priority ) &&
-         ( status == right.status ) &&
-         ( single == right.single))
-    {
-        return true;
-    }
-    else
+    if(query->count() != 0)
     {
         return false;
     }
+    else
+    {
+        return true;
+    }
 }
 
-/*======================================================
-метод перегружает оператор != (не равно), позволяя
-сравнивать между собой объекты типа Task.
-Если объекты Task не равны друг другу, метод возвращает
-true, иначе - false
-======================================================*/
-bool Task::operator != ( const Task & right )
+QList<Task> Task::getTaskList()
 {
-    return !( this == & right );
+    QList <Task> taskList;
+    query->clear();
+    QList <TaskModel *> list = TaskModel::toTaskModel(query->getAll());
+    for(int i = 0; i < list.size(); i++)
+    {
+        Task t;
+        t.setID(list[i]->getRecord("task_id").toInt());
+        t.setCronjob(list[i]->getRecord("cronjob").toString());
+        t.setDevType(list[i]->getRecord("dev_type").toString());
+        t.setDevAddress(list[i]->getRecord("dev_address").toString());
+        t.setLogin(list[i]->getRecord("login").toString());
+        t.setPassword(list[i]->getRecord("password").toString());
+        t.setTask(list[i]->getRecord("task").toString());
+        t.setArgums(list[i]->getRecord("task_arg").toStringList());
+        t.setPriority(list[i]->getRecord("priority").toInt());
+        t.setStatus(list[i]->getRecord("status").toInt());
+
+        t.query = query;
+        t.model = list[i];
+        taskList.append(t);
+    }
+    return taskList;
 }
 
-/*======================================================
-деструктор класса
-======================================================*/
+//--
+QString Task::toString(QStringList list)
+{
+    QString result = "";
+    int i=0;
+    if(!list.empty())
+    {
+        result += list[i];
+        i++;
+        while( i < list.size() )
+        {
+            result += ", ";
+            result += list[i];
+            i++;
+        }
+    }
+    return result;
+}
+
+//заглушка
+Task Task::parseArgs(Task &task, QList<QString> argList)
+{
+    for ( int i = 0; i < argList.size(); i++ )
+    {
+        if ( argList[i] == "single" )
+        {
+            task.setSingle( true );
+        }
+    }
+    return task;
+}
+
 Task::~Task()
 {
 

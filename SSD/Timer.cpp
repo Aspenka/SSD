@@ -14,7 +14,7 @@ Timer::Timer( QObject *parent) : QObject(parent)
 
 }
 
-Timer::Timer(const Timer &obj, QObject *parent)
+Timer::Timer(const Timer &obj, QObject *parent) : QObject(parent)
 {
     parser = obj.parser;
     cronJob = obj.cronJob;

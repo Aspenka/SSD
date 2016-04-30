@@ -14,11 +14,6 @@
 class Scheduler : public QObject
 {
     Q_OBJECT
-private:
-    QVector <Timer *> timer;
-    Task oneTask;
-    QList <Task> taskList;
-
 public:
     explicit Scheduler(QObject *parent = 0);  //пустой конструктор
     Scheduler(Task  & oneTsk, QObject *parent = 0); //конструктор, принимающий один экземпляр задания
@@ -32,13 +27,19 @@ public:
     void remove(int index); //метод удаляет из вектора заданий значение с индексом index
 
     void clear();   //очистить очередь заданий
+
+private:
+    QVector <Timer *> timer;
+    Task oneTask;
+    QList <Task> taskList;
+
 signals:
-    void callTask(int taskIndex);     //сигнал о начале выполнения нового задания
+    void sig_callTask(int taskIndex);     //сигнал о начале выполнения нового задания
 public slots:
     void start();   //метод-слот запускает планировщик
     void restart(); //перезапуск шедулера
     void stop();    //метод останавливает шщедулер
-    void slotReaction(int index);   //метод-слот, реагируюшщий на срабатывание таймера
+    void slt_Reaction(int index);   //метод-слот, реагируюшщий на срабатывание таймера
 };
 
 #endif // Scheduler_H
