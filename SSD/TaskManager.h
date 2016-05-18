@@ -46,7 +46,7 @@ public:
     TaskManager ( QByteArray data, QObject *parent = 0 ); //заглушка
     ~TaskManager();
 
-    void                addTask (Task &task, int priority = 0);
+    void                addTask (Task &task);
     void                removeTask ( int index );
     void                removeTask ( Task task );
     void                clear ();
@@ -58,10 +58,10 @@ private:
     Scheduler           scheduler;
     int                 limit;  //--
 
-    void                updateTask ( int index, int status = 0, int priority = 0 );
+    void                updateTask (int index, int status = 0);
     void                parse ( QByteArray data );
     void                handleTask ();
-    void                sortTasklist (QList<Task> &list, int left, int right);
+    //void                sortTasklist (QList<Task> &list, int left, int right);
     void                parse ();           //заглушка
     void                setConfig();        //--
 
@@ -70,6 +70,7 @@ signals:
 public slots:
     void                slt_Run ( int index);
     void                slt_OnDone (Task task);  //--
+    void                slt_taskDone(int index);
 };
 
 #endif // TASKMANAGER_H

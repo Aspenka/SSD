@@ -5,7 +5,7 @@
 #include <QString>
 #include <QStringList>
 #include <QList>
-#include "TaskModel.h"
+#include "TableModel.h"
 #include "Query.h"
 
 enum status_e
@@ -23,31 +23,21 @@ public:
     Task ( Task const & obj, QObject *parent = 0 );
     ~Task();
 
-    void            setStatus ( int st );
-    void            setSingle ( bool sgl );
-    void            setPriority ( int pr );
-    void            setCronjob ( QString cron );
-    void            setDevAddress ( QString devAddr );
-    void            setDevType ( QString devType );
-    void            setLogin ( QString lgn );
-    void            setPassword ( QString pass );
-    void            setTask ( QString tsk );
-    void            setArgums (QStringList args );
-    void            setID (int id);
+    void            setStatus(int st);
+    void            setUid(int i);    
+    void            setCronjob(QString cron);
+    void            setParameters(QString params);
 
-    int             getPriority();
-    bool            getSingle();
+    int             getUid();
     QList <Task>    getTaskList();
-    QString         getCronjob();   //--
-    QString         getTask();      //--
-    QString         getDevType();   //--
+    QString         getCronjob();
+    QString         getParameters();
 
     bool            isEmpty();
 
-
     void            save();
     void            remove();
-    void            edit(int taskStatus = 0, int taskPriority = 0);
+    void            edit(int taskStatus);
 
     void            print();
 
@@ -56,27 +46,19 @@ public:
     bool            operator != (const Task & right);
 private:
     QString         cronjob,
-                    deviceAddress,
-                    deviceType,
-                    login,
-                    password,
-                    task;
-    QStringList     taskArguments;
-    bool            single;
-    int             priority,
-                    status,
-                    taskID;
+                    parameters;
+    int             status,
+                    uid;
     TaskModel       *model;
     Query           *query;
 
-    QString     toString (QStringList list);    //-
     void        copy(const Task &obj);
-    Task        parseArgs(Task & task, QList <QString> argList); //заглушка
 
 signals:
     void        sig_done(Task);
 
 public slots:
+
 };
 
 #endif // TASK_H

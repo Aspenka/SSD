@@ -35,6 +35,7 @@ private:
 
 signals:
     void sig_callTask(int taskIndex);     //сигнал о начале выполнения нового задания
+    void sigDone(int taskIndex);
 public slots:
     void start();   //метод-слот запускает планировщик
     void restart(); //перезапуск шедулера

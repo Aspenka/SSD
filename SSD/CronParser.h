@@ -37,6 +37,7 @@ private:
     QDateTime calcTaskDate();   //метод парсит cron-выражение и рассчитывает ближайшую дату вызова функции
 
 signals:
+    void isSingle(bool singleShot);
 
 public slots:
 };

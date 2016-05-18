@@ -12,13 +12,13 @@ TaskManager::TaskManager ( QObject *parent ) : QObject ( parent )
 
 }
 
-//заглушка
+//--
 TaskManager::TaskManager (QByteArray data, QObject *parent) : QObject ( parent )
 {
     //parse(data);----------------
 }
 
-//заглушка
+//--
 void TaskManager::run()
 {
     Task task;
@@ -33,6 +33,7 @@ void TaskManager::run()
     {
         if ( !taskList.empty() )
         {
+            QObject::connect( &scheduler, SIGNAL(sigDone(int)), this, SLOT(slt_taskDone(int)));
             QObject::connect( &scheduler, SIGNAL(sig_callTask(int)), this, SLOT(slt_Run(int)) );
             for ( int i = 0; i < taskList.size(); i++ )
             {
@@ -66,58 +67,10 @@ void TaskManager::setConfig()
 
 параметры метода:
     Task task - объект задача;
-    int priority - приоритет задачи. Параметр является
-                   необязательным.
 ======================================================*/
-void TaskManager::addTask ( Task & task, int priority )
+void TaskManager::addTask (Task & task)
 {
-    if( priority != 0 )
-    {
-        task.setPriority( priority );
-    }
     taskList.append(task);
-    sortTasklist(taskList, 0, taskList.size()-1);
-}
-
-/*======================================================
-метод упорядочивает задачи в соответствии с их
-приоритетом
-======================================================*/
-void TaskManager::sortTasklist(QList<Task> & list, int left, int right)
-{
-    int i = left;
-    int j = right;
-    int p;
-    Task temp;
-    p = list[(left + right )/2].getPriority();
-    do
-    {
-        while ( list[i].getPriority() > p )
-        {
-            i++;
-        }
-        while ( list[j].getPriority() < p )
-        {
-            j--;
-        }
-        if ( i <= j )
-        {
-            temp = list[i];
-            list[i] = list[j];
-            list[j] = temp;
-            i++;
-            j--;
-        }
-    }
-    while ( i <= j );
-    if ( j > left )
-    {
-        sortTasklist ( list, left, j);
-    }
-    if ( i < right )
-    {
-        sortTasklist( list, i, right );
-    }
 }
 
 /*======================================================
@@ -174,7 +127,6 @@ void TaskManager::handleTask ()
         taskList[i].setStatus(PROCESSING);
         updateTask(i, PROCESSING);
     }
-    sortTasklist(taskList, 0, taskList.size() - 1);
     scheduler.append(taskList);
     scheduler.start();
 }
@@ -185,13 +137,11 @@ void TaskManager::handleTask ()
 параметры метода:
     int index - порядковый номер задачи в списке;
     int status - статус задачи, параметр является
-                 необязательным;
-    int priority - приоритет задачи, параметр является
-                   необязательным
+                 необязательным
 ======================================================*/
-void TaskManager::updateTask ( int index, int status, int priority )
+void TaskManager::updateTask ( int index, int status)
 {
-    taskList[index].edit(status, priority);
+    taskList[index].edit(status);
 }
 
 /*======================================================
@@ -219,12 +169,12 @@ void TaskManager::parse()
                 set.setArrayIndex( i );
                 Task task;
                 task.setCronjob ( set.value("cronjob").toString() );
-                task.setDevAddress ( set.value("devAddr").toString() );
-                task.setDevType ( set.value("devType").toString() );
-                task.setLogin ( set.value("login").toString() );
-                task.setPassword ( set.value("password").toString() );
-                task.setTask ( set.value("task").toString() );
-                task.setPriority( set.value("priority").toInt() );
+                //task.setDevAddress ( set.value("devAddr").toString() );
+                //task.setDevType ( set.value("devType").toString() );
+                //task.setLogin ( set.value("login").toString() );
+                //task.setPassword ( set.value("password").toString() );
+                //task.setTask ( set.value("task").toString() );
+                //task.setPriority( set.value("priority").toInt() );
                 QString temp = set.value("arguments").toString();
                 QStringList list;
                 if(temp != "")
@@ -237,11 +187,11 @@ void TaskManager::parse()
                     {
                         list.append(temp);
                     }
-                    task.setArgums(list);
+                    //task.setArgums(list);
                 }
                 else
                 {
-                    task.setArgums(list);
+                    //task.setArgums(list);
                 }
                 task.save();
                 addTask( task );
@@ -272,7 +222,6 @@ void TaskManager::print()
 void TaskManager::slt_OnDone(Task task)
 {
     removeTask( task );
-    sortTasklist(taskList, 0, taskList.size() - 1);
 }
 
 /*======================================================
@@ -284,11 +233,13 @@ void TaskManager::slt_OnDone(Task task)
 void TaskManager::slt_Run (int index)
 {
     qDebug() << "[" << QDateTime::currentDateTime().toString("dd/MM/yy hh:mm:ss")
-             << "]: Call " << taskList[index].getTask() << " for " << taskList[index].getDevType() << endl;
-    if ( taskList[index].getSingle() != false )
-    {
-        updateTask(index, DONE);
-    }
+             << "]: Call task " << index << endl;
+}
+
+//--
+void TaskManager::slt_taskDone(int index)
+{
+    updateTask(index, DONE);
 }
 
 /*======================================================

@@ -17,12 +17,41 @@ TableSchema *TableSchema::operator =(const TableSchema *obj)
     return this;
 }
 
+bool relation_s::operator ==( const relation_s & right ) const
+{
+    if(( link == right.link ) &&
+       ( type == right.type ) &&
+       ( model == right.model ))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool relation_s::operator !=( const relation_s & right ) const
+{
+    return !( this == & right );
+}
+
+relation_s & relation_s::operator = (relation_s const & obj)
+{
+    link = obj.link;
+    type = obj.type;
+    model = obj.model;
+}
+
 bool TableSchema::operator == ( const TableSchema &right )
 {
     if ( ( fields == right.fields ) &&
          ( primaryKey == right.primaryKey ) &&
          ( foreignKey == right.foreignKey ) &&
-         ( tableName == right.tableName ))
+         ( tableName == right.tableName ) &&
+         ( relations == right.relations ) &&
+         ( relationData == right.relationData))
+         //( multiRelationData == right.multiRelationData ))
     {
         return true;
     }
@@ -37,7 +66,10 @@ bool TableSchema::operator == ( const TableSchema *right )
     if ( ( fields == right->fields ) &&
          ( primaryKey == right->primaryKey ) &&
          ( foreignKey == right->foreignKey ) &&
-         ( tableName == right->tableName ))
+         ( tableName == right->tableName ) &&
+         ( relations == right->relations ) &&
+         //( multiRelationData == right->multiRelationData ) &&
+         ( relationData == right->relationData))
     {
         return true;
     }
@@ -68,6 +100,9 @@ void TableSchema::copy(const TableSchema &obj)
     primaryKey = obj.primaryKey;
     foreignKey = obj.foreignKey;
     tableName = obj.tableName;
+    relationData = obj.relationData;
+    relations = obj.relations;
+    //multiRelationData = obj.multiRelationData;
 }
 
 void TableSchema::setFields(QStringList fieldsList)
@@ -89,6 +124,16 @@ void TableSchema::setTableName(QString tName)
 {
     tableName = tName;
 }
+
+void TableSchema::setRelationData(relation_data_t data)
+{
+    relationData.unite(data);
+}
+
+/*void TableSchema::setRelationData(multi_relation_data_t data)
+{
+    multiRelationData = data;
+}*/
 
 QStringList TableSchema::getFields()
 {
@@ -113,6 +158,11 @@ QString TableSchema::getTableName()
 int TableSchema::getFieldsCount()
 {
     return fields.size();
+}
+
+relation_data_t TableSchema::getRelationData()
+{
+    return relationData;
 }
 
 relation_s TableSchema::getRelation(QString key)

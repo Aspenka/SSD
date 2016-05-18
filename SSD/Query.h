@@ -3,12 +3,15 @@
 
 #include <QObject>
 #include <QList>
+#include <QPair>
+#include <QVariant>
 #include <QString>
 #include <QtSql>
 #include "tableschema.h"
 #include "model.h"
 
-typedef QList<QList <QVariant>> matrix_t;
+typedef QList <QList <QPair <QString, QVariant>>>   matrix_t;
+typedef QList <QPair <QString, QVariant>>           list_t;
 
 class Query : public QObject
 {
@@ -20,11 +23,12 @@ public:
 
     void                setWhere(QString fieldName, QVariant value );
     void                setOrder(QString fieldName );
-    void                setSelectedFields( QStringList fields );
+    void                setSelectedFields(QStringList fields );
     void                setLimit( QString str );
-    void                withOuter(QString relationName, QString inField, QString outField);
-    void                withInner(QString relationName, QString inField, QString outField);
-    void                clear();
+    void                withOuter(QString relationName);
+    void                withInner(QString relationName);
+
+    void                updateSchema(Model* model);
 
     Model *             getOne();
     Model *             getEmpty();
@@ -36,7 +40,10 @@ public:
     bool                operator == (const Query & right);
     bool                operator != (const Query & right);
 
+    void                clear();
+
 private:
+    Model *             queryModel;
     QString             where,
                         order,
                         selectedFields,
@@ -44,20 +51,22 @@ private:
                         countString,
                         outerJoin,
                         innerJoin,
-                        sqlString;
-    TableSchema         *schema;
+                        sqlString,
+                        rName;
+    TableSchema *       schema;
     QSqlDatabase        database;   //объект по работе с БД
+
     QStringList         selectedList;
 
     void                copy(Query const & obj);
     void                connectToDB();
 
     QString             generateSQL();
-    matrix_t            requestMany(QString sql, TableSchema * tableSchema);
-    QList<QVariant>     requestOne(QString sql, TableSchema * tableSchema);
-    Model *             appendRecords(TableSchema *tableSchema, QList<QVariant> values, Model *& model);
+    matrix_t            requestMany(QString sql);
+    list_t              requestOne(QString sql);
+    Model *             appendRecords(list_t values, Model *& model);
+    relation_data_t     getRelationModel(list_t values, Model * & model);
     QString             listToString(QStringList list);
-    TableSchema *       generateTableSchema(QStringList list, TableSchema * table1, TableSchema * table2);  //--
 signals:
 
 public slots:

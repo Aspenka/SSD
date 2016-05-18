@@ -1,10 +1,10 @@
 #include <QCoreApplication>
-#include "Server.h"
+#include "DCServer.h"
 
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    Server serv;
+    DCServer serv;
     serv.startServer();
     return a.exec();
 }

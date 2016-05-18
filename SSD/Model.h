@@ -18,23 +18,26 @@ public:
     ~Model();
 
     Model &                     operator = (Model const & obj);
+    Model *                     operator = (Model const * obj);
     bool                        operator == (const Model & right);
     bool                        operator != (const Model & right);
 
     void                        setField(QString fieldName, QVariant value);
     void                        setSchema(TableSchema * tableSschema);
     void                        setRelation(Model *outModel, QString relationName);
+    void                        setRelationData(QString relationName, QList<Model *> model);
     void                        setIsNew(bool value);
 
     TableSchema *               getSchema();
+    bool                        getIsNew();
+    QStringList                 getSelectedFields(QStringList fieldList);
     QVariant                    getRecord(QString fieldName);
     QStringList                 getFields();
-    bool                        getIsNew();
 
     bool                        save(QStringList fields = {});
     bool                        remove();
-
-    void                        print();    //--
+    void                        print();            //--
+    void                        printRelation();    //--
 
 protected:
     QMap <QString, QVariant>    record;     //запись
@@ -51,7 +54,6 @@ protected:
     QString                     getString(QVariant value);
 
 signals:
-
 public slots:
 };
 

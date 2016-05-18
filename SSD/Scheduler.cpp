@@ -68,10 +68,7 @@ void Scheduler::start()
         Timer *t = new Timer();
         timer.append(t);
         connect (timer.at(i), SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
-        if(taskList[i].getSingle() == true)
-        {
-            timer[i]->setSingleShot(true);
-        }
+        connect (timer.at(i), SIGNAL(done(int)), this, SIGNAL(sigDone(int)));
         timer[i]->start(taskList[i].getCronjob(), i);
         qDebug() << "Tmer " << i << " have cron " << taskList[i].getCronjob();
     }

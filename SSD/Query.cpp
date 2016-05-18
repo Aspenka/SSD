@@ -4,6 +4,7 @@ Query::Query(TableSchema *tableSchema, QObject *parent) : QObject(parent)
 {
     schema = tableSchema;
     clear();
+    queryModel = new Model();
     connectToDB();
 }
 
@@ -17,13 +18,15 @@ void Query::copy(const Query &obj)
     database = obj.database;
     schema = obj.schema;
     selectedFields = obj.selectedFields;
-    selectedList == obj.selectedList;
+    selectedList = obj.selectedList;
     where = obj.where;
     limit = obj.limit;
     order = obj.order;
     sqlString = obj.sqlString;
     countString = obj.countString;
     innerJoin = obj.innerJoin;
+    rName = obj.rName;
+    queryModel = obj.queryModel;
 }
 
 Query & Query::operator = (Query const & obj)
@@ -43,7 +46,9 @@ bool Query::operator == ( const Query &right )
          ( order == right.order ) &&
          ( sqlString == right.sqlString ) &&
          ( countString == right.countString ) &&
-         ( innerJoin == right.innerJoin ))
+         ( innerJoin == right.innerJoin ) &&
+         ( rName == right.rName )   &&
+         ( queryModel == right.queryModel))
     {
         return true;
     }
@@ -56,6 +61,18 @@ bool Query::operator == ( const Query &right )
 bool Query::operator != ( const Query & right )
 {
     return !( this == & right );
+}
+
+void Query::clear()
+{
+    selectedFields = "*";
+    where = "";
+    limit = "";
+    order = "";
+    sqlString = "";
+    countString = "";
+    innerJoin = "";
+    rName = "";
 }
 
 void Query::setWhere(QString fieldName, QVariant value)
@@ -88,34 +105,19 @@ void Query::setLimit(QString str)
     limit = " LIMIT " + str;
 }
 
-void Query::withOuter(QString relationName, QString inField, QString outField)
+void Query::withOuter(QString relationName)
 {
-    relation_s r = schema->getRelation(relationName);
+    rName = relationName;
+    relation_s r = schema->getRelation(rName);
     try
     {
-        if((!r.link.empty()) && (r.type != 0))
+        if((r.link.first != "") && (r.link.second != "") && (r.type != 0))
         {
-            Model *model = r.Model;
-            TableSchema *sch = model->getSchema();
+            TableSchema *sch = r.model->getSchema();
             outerJoin =  " LEFT OUTER JOIN ";
             outerJoin += sch->getTableName() + " ON ";
-            outerJoin += inField + " = " + outField;
-            QString sql = generateSQL();
-
-            TableSchema *temp = generateTableSchema(selectedList, schema, sch);
-            matrix_t matrix = requestMany(sql, temp);
-            QList <Model *> list;
-            int i=0;
-            while(i != matrix.size())
-            {
-                Model * model = new Model();
-                model->setSchema(temp);
-                model = appendRecords(temp, matrix[i], model);
-                model->print();
-                qDebug() << "\n";
-                list.append(model);
-                i++;
-            }
+            outerJoin += schema->getRelation(rName).link.first;
+            outerJoin += " = " + schema->getRelation(rName).link.second;
         }
         else
         {
@@ -124,38 +126,24 @@ void Query::withOuter(QString relationName, QString inField, QString outField)
     }
     catch(relation_s)
     {
-        qDebug() << "[Query::WithOuter]:\tError! Can not get relation" << relationName << "!";
+        qDebug() << "[Query::WithOuter]:\tError! Can not get relation" << rName << "!";
+        qDebug() << r.link.first << "; " << r.link.second << "; " << r.type;
     }
 }
 
-void Query::withInner(QString relationName, QString inField, QString outField)
+void Query::withInner(QString relationName)
 {
-    relation_s r = schema->getRelation(relationName);
+    rName = relationName;
+    relation_s r = schema->getRelation(rName);
     try
     {
-        if((!r.link.empty()) && (r.type != 0))
+        if((r.link.first != "") && (r.link.second != "") && (r.type != 0))
         {
-            Model *model = r.Model;
-            TableSchema *sch = model->getSchema();
+            TableSchema *sch = r.model->getSchema();
             innerJoin =  " INNER JOIN ";
             innerJoin += sch->getTableName() + " ON ";
-            innerJoin += inField + " = " + outField;
-            QString sql = generateSQL();
-
-            TableSchema *temp = generateTableSchema(selectedList, schema, sch);
-            matrix_t matrix = requestMany(sql, temp);
-            QList <Model *> list;
-            int i=0;
-            while(i != matrix.size())
-            {
-                Model * model = new Model();
-                model->setSchema(temp);
-                model = appendRecords(temp, matrix[i], model);
-                model->print();
-                qDebug() << "\n";
-                list.append(model);
-                i++;
-            }
+            innerJoin += schema->getRelation(rName).link.first;
+            innerJoin += " = " + schema->getRelation(rName).link.second;
         }
         else
         {
@@ -164,7 +152,7 @@ void Query::withInner(QString relationName, QString inField, QString outField)
     }
     catch(relation_s)
     {
-        qDebug() << "[Query::WithInner]:\tError! Can not get relation" << relationName << "!";
+        qDebug() << "[Query::WithInner]:\tError! Can not get relation" << rName << "!";
     }
 }
 
@@ -200,10 +188,10 @@ int Query::count(QString fieldName)
     countString = "COUNT(" + fieldName + ")";
     QString sql = generateSQL();
 
-    QList <QVariant> list = requestOne(sql, schema);
+    list_t list = requestOne(sql);
     if(!list.empty())
     {
-        return list[0].toInt();
+        return list[0].second.toInt();
     }
     else
     {
@@ -212,20 +200,41 @@ int Query::count(QString fieldName)
 }
 
 Model * Query::getOne()
-{
+{    
     sqlString = generateSQL();
-    QList <QVariant> vector = requestOne(sqlString, schema);
 
-    Model * model = new Model();
-    model->setSchema(schema);
-    model = appendRecords(schema, vector, model);
-    return model;
+    list_t vector = requestOne(sqlString);
+    try
+    {
+        if(vector.empty())
+        {
+            throw vector;
+        }
+        if((innerJoin == "") && (outerJoin == ""))
+        {
+            queryModel->setSchema(schema);
+            queryModel = appendRecords(vector, queryModel);
+        }
+        else
+        {
+            Model * temp = schema->getRelation(rName).model;
+            relation_data_t data = getRelationModel(vector, temp);
+            schema->setRelationData(data);
+            queryModel->setSchema(schema);
+            queryModel = appendRecords(vector, queryModel);
+        }
+    }
+    catch(list_t)
+    {
+        qDebug() << "[Query::getOne]:\tRequest list is empty!";
+    }
+    return queryModel;
 }
 
 QList<Model *> Query::getAll()
 {
     sqlString = generateSQL();
-    matrix_t matrix = requestMany(sqlString, schema);
+    matrix_t matrix = requestMany(sqlString);
 
     QList <Model *> list;
     int i=0;
@@ -233,7 +242,7 @@ QList<Model *> Query::getAll()
     {
         Model * model = new Model();
         model->setSchema(schema);
-        model = appendRecords(schema, matrix[i], model);
+        model = appendRecords(matrix[i], model);
         list.append(model);
         i++;
     }
@@ -247,22 +256,62 @@ Model * Query::getEmpty()
     return model;
 }
 
-Model * Query::appendRecords(TableSchema *tableSchema, QList<QVariant> values, Model *&model)
+void Query::updateSchema(Model *model)
+{
+    schema = model->getSchema();
+    queryModel = model;
+}
+
+Model * Query::appendRecords(list_t values, Model * & model)
 {
     if(!values.empty())
     {
         model->setIsNew(false);
-        for(int i = 0; i < tableSchema->getFieldsCount(); i++)
+        QStringList fields = model->getSchema()->getFields();
+        for(int i = 0; i < values.size(); i++)
         {
-            model->setField(tableSchema->getFields()[i], values[i]);
+            if(fields.contains(values[i].first))
+            {
+                model->setField(values[i].first, values[i].second);
+            }
         }
-    }
-    return model;
+    }    
+    return model;    
 }
 
-QList<QVariant> Query::requestOne(QString sql)
+relation_data_t Query::getRelationModel(list_t values, Model * & model)
 {
-    QList <QVariant> result;
+    relation_data_t rData;
+    QList <Model *> list;
+    if(!values.empty())
+    {
+        QStringList fields = model->getSchema()->getFields();
+        int i = 0;
+        while(i < values.size())
+        {
+            int j = i;
+            Model * temp = new Model();
+            temp->setSchema(model->getSchema());
+            temp->setIsNew(false);
+            while(values[j] != QPair <QString, QVariant> ("", ""))
+            {
+                if((fields.contains(values[j].first)) && (values[j].second != ""))
+                {
+                    temp->setField(values[j].first, values[j].second);
+                }                
+                j++;
+            }
+            list.append(temp);
+            i = j + 1;
+        }
+    }
+    rData.insert(rName, list);
+    return rData;
+}
+
+list_t Query::requestOne(QString sql)
+{
+    list_t result;
     QSqlQuery *query = new QSqlQuery(database);
     query->prepare(sql);
     try
@@ -271,10 +320,23 @@ QList<QVariant> Query::requestOne(QString sql)
         {
             while(query->next())
             {
-                for(int i = 0; i < tableSchema->getFieldsCount(); i++)
+                for(int i = 0; i < query->record().count(); i++)
                 {
-                    result.append(query->value(i));
+                    QPair <QString, QVariant> pair(query->record().fieldName(i), query->value(i));
+                    if((innerJoin == "") && (outerJoin == ""))
+                    {
+                        result.append(pair);
+                    }
+                    else
+                    {
+                        QSqlRecord records = database.record(schema->getRelation(rName).model->getSchema()->getTableName());
+                        if(records.contains(query->record().fieldName(i)))
+                        {
+                            result.append(pair);
+                        }
+                    }
                 }
+                result.append(QPair <QString, QVariant> ("", ""));
             }
         }
         else
@@ -286,10 +348,11 @@ QList<QVariant> Query::requestOne(QString sql)
     {
         qDebug() << "[Query error]: " << query->lastError();
     }
+
     return result;
 }
 
-matrix_t Query::requestMany(QString sql, TableSchema *tableSchema)
+matrix_t Query::requestMany(QString sql)
 {
     matrix_t result;
     QSqlQuery *query = new QSqlQuery(database);
@@ -300,10 +363,11 @@ matrix_t Query::requestMany(QString sql, TableSchema *tableSchema)
         {
             while(query->next())
             {
-                QList <QVariant> list;
-                for(int i = 0; i < tableSchema->getFieldsCount(); i++)
+                QList <QPair <QString, QVariant>> list;
+                for(int i = 0; i < schema->getFieldsCount(); i++)
                 {
-                    list.append(query->value(i));
+                    QPair <QString, QVariant> pair(query->record().fieldName(i), query->value(i));
+                    list.append(pair);
                 }
                 result.append(list);
             }
@@ -348,10 +412,10 @@ QVariant Query::getlastID()
 {
     selectedFields = "last_insert_rowid()";
     QString sql = generateSQL();
-    QList<QVariant> list = requestOne(sql, schema);
+    list_t list = requestOne(sql);
     if(!list.empty())
     {
-        return list[0];
+        return list[0].second;
     }
     else
     {
@@ -371,29 +435,6 @@ QString Query::listToString(QStringList list)
         i++;
     }
     return result;
-}
-
-TableSchema * Query::generateTableSchema(QStringList list, TableSchema *table1, TableSchema *table2)
-{
-    TableSchema * schem = new TableSchema();
-    if(list.empty())
-    {
-        list.append(table1->getFields());
-        list.append(table2->getFields());
-    }
-    schem->setFields(list);
-    return schem;
-}
-
-void Query::clear()
-{
-    selectedFields = "*";
-    where = "";
-    limit = "";
-    order = "";
-    sqlString = "";
-    countString = "";
-    innerJoin = "";
 }
 
 Query::~Query()

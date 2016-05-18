@@ -21,11 +21,14 @@ SOURCES += main.cpp \
     Scheduler.cpp \
     Timer.cpp \
     CronParser.cpp \
-    Server.cpp \
     Model.cpp \
     Query.cpp \
     TableSchema.cpp \
-    TaskModel.cpp
+    HTTPServer.cpp \
+    DCServer.cpp \
+    TableModel.cpp \
+    Message.cpp \
+    Request.cpp
 
 HEADERS += \
     Task.h \
@@ -33,8 +36,11 @@ HEADERS += \
     Scheduler.h \
     Timer.h \
     CronParser.h \
-    Server.h \
     Model.h \
     Query.h \
     TableSchema.h \
-    TaskModel.h
+    HTTPServer.h \
+    DCServer.h \
+    TableModel.h \
+    Message.h \
+    Request.h

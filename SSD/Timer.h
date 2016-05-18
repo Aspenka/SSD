@@ -18,7 +18,7 @@ public:
     Timer ( Timer const & obj, QObject *parent = 0 );
     ~Timer();   //деструктор
 
-    void setSingleShot(bool singleShot);    //метод станавливает переменную singShot в нужное состояние
+
     Timer &     operator = (Timer const & obj);
 
 private:
@@ -35,10 +35,12 @@ private:
 
 signals:
     void timeout(int index);  //сигнал о том, что время таймера истекло
+    void done(int index);
 
 public slots:
     void start(QString cron, int index);        //запуск таймера
     void stop();                        //остановка таймера
+    void setSingleShot(bool singleShot);    //метод станавливает переменную singShot в нужное состояние
 };
 
 #endif // TIMER_H

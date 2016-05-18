@@ -11,7 +11,7 @@
 //конструктор
 Timer::Timer( QObject *parent) : QObject(parent)
 {
-
+    connect(&parser, SIGNAL(isSingle(bool)), this, SLOT(setSingleShot(bool)));
 }
 
 Timer::Timer(const Timer &obj, QObject *parent) : QObject(parent)
@@ -70,6 +70,10 @@ void Timer::timerEvent(QTimerEvent *event)
             nextExec = parser.getDateTime(cronJob).toTime_t();
             if(calcDiffTime() == 0)parser.setCall(true);
             timerStart = startTimer(calcDiffTime());
+        }
+        else
+        {
+            emit done(taskIndex);
         }
     }
 }

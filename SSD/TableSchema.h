@@ -9,6 +9,9 @@
 
 class Model;
 
+typedef QMap <QString, QList <Model *>> relation_data_t;
+//typedef QMap <QString, QList <Model *>>   multi_relation_data_t;
+
 enum    relationType_e
 {
     ONE_TO_ONE = 1,
@@ -18,9 +21,14 @@ enum    relationType_e
 
 struct relation_s
 {
-    QMap <QString, QString> link;
-    int type {0};
-    Model * Model;
+    QPair <QString,
+           QString> link;
+    int             type {0};
+    Model *         model;
+
+    bool            operator == (const relation_s & right) const;
+    bool            operator != (const relation_s & right) const;
+    relation_s &    operator = (relation_s const & obj);
 };
 
 class TableSchema : public QObject
@@ -37,13 +45,17 @@ public:
     void            setTableName(QString tName);
     void            setRelations(QString name, relation_s relation);
 
+    void            setRelationData(relation_data_t data);
+    //void            setRelationData(multi_relation_data_t data);
 
     QStringList     getFields();
+
     QStringList     getPrimaryKey();
     QStringList     getForeignKey();
     QString         getTableName();
     int             getFieldsCount();
     relation_s      getRelation(QString key);
+    relation_data_t getRelationData();
 
     bool            checkField(QString fieldName);
 
@@ -63,6 +75,10 @@ private:
 
     QMap <QString,
     relation_s>     relations;
+
+    relation_data_t        relationData;
+
+    //multi_relation_data_t  multiRelationData;
 
     void            copy(TableSchema const & obj);
 signals:

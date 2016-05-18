@@ -17,6 +17,7 @@ void Model::copy(const Model & obj)
     isNew = obj.isNew;
     schema = obj.schema;
     database = obj.database;
+    relation = obj.relation;
 }
 
 Model & Model::operator =(Model const & obj)
@@ -25,14 +26,18 @@ Model & Model::operator =(Model const & obj)
     return *this;
 }
 
+Model * Model::operator =(Model const * obj)
+{
+    copy(*obj);
+    return this;
+}
+
 bool Model::operator == ( const Model &right )
 {
     if ( ( record == right.record ) &&
          ( isNew == right.isNew ) &&
          ( schema == right.schema ) &&
-         ( relation.link == right.relation.link ) &&
-         ( relation.Model == right.relation.Model) &&
-         ( relation.type == right.relation.type))
+         ( relation == right.relation))
     {
         return true;
     }
@@ -45,6 +50,27 @@ bool Model::operator == ( const Model &right )
 bool Model::operator != ( const Model & right )
 {
     return !( this == & right );
+}
+
+bool Model::getIsNew()
+{
+    return isNew;
+}
+
+QStringList Model::getFields()
+{
+    return schema->getFields();
+}
+
+QStringList Model::getSelectedFields(QStringList fieldList)
+{
+    QStringList result;
+    for(int i = 0; i < fieldList.size(); i++)
+    {
+        result.append(schema->getTableName()+ "." + fieldList[i]);
+    }
+
+    return result;
 }
 
 void Model::setField(QString fieldName, QVariant value)
@@ -66,6 +92,28 @@ void Model::setField(QString fieldName, QVariant value)
     }
 }
 
+QVariant Model::getRecord(QString fieldName)
+{
+    QVariant result;
+        try
+        {
+            if(schema->checkField(fieldName))
+            {
+                result = record.value(fieldName);
+            }
+            else
+            {
+                throw fieldName;
+            }
+        }
+        catch(QString)
+        {
+            qDebug() << "[Model::getRecord]:\tError! Field " << fieldName
+                     << " does not exost in table " << schema->getTableName();
+        }
+        return result;
+}
+
 void Model::setSchema(TableSchema *tableSschema)
 {
     schema = tableSschema;
@@ -76,10 +124,10 @@ void Model::setIsNew(bool value)
     isNew = value;
 }
 
-void Model::setRelation(Model *outModel, QString relationName)
+void Model::setRelationData(QString relationName, QList <Model *> model)
 {
-    relation.Model = outModel;
-    schema->setRelations(relationName, relation);
+    relation_data_t data = {{relationName, model}};
+    schema->setRelationData(data);
 }
 
 bool Model::save(QStringList fields)
@@ -236,36 +284,10 @@ TableSchema *Model::getSchema()
     return schema;
 }
 
-bool Model::getIsNew()
+void Model::setRelation(Model *outModel, QString relationName)
 {
-    return isNew;
-}
-
-QVariant Model::getRecord (QString fieldName)
-{
-    QVariant result;
-    try
-    {
-        if(schema->checkField(fieldName))
-        {
-            result = record.value(fieldName);
-        }
-        else
-        {
-            throw fieldName;
-        }
-    }
-    catch(QString)
-    {
-        qDebug() << "[Model::getRecord]:\tError! Field " << fieldName
-                 << " does not exost in table " << schema->getTableName();
-    }
-    return result;
-}
-
-QStringList Model::getFields()
-{
-    return schema->getFields();
+    relation.model = outModel;
+    schema->setRelations(relationName, relation);
 }
 
 //--
@@ -275,6 +297,24 @@ void Model::print()
     for(i = record.begin(); i != record.end(); i++)
     {
         qDebug() << i.key() << ":\t" << i.value().toString();
+    }
+}
+
+//--
+void Model::printRelation()
+{
+    relation_data_t data = schema->getRelationData();
+    QMap <QString,QList< Model *>>::iterator i = data.begin();
+    qDebug() << "============== RELATIONS ===============";
+    while(i != data.end())
+    {
+        QList <Model *> list = i.value();
+        for(int j = 0; j < list.size(); j++)
+        {
+            qDebug() << i.key() << ":";
+            list[j]->print();
+        }
+        i++;
     }
 }
 

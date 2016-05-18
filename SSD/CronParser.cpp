@@ -46,7 +46,7 @@ QDateTime CronParser::calcTaskDate()
     QStringList crons = cronJob.split(" ");                         //делим строку на части по пробелам;
     try
     {
-        if(crons.size() != 5)
+        if(crons.size() != 6)
         {
             throw crons.size();
         }
@@ -62,35 +62,72 @@ QDateTime CronParser::calcTaskDate()
             minute = parse(crons.at(0), value, 0, 59);
 
             value = QTime::currentTime().hour();
-            if(minute.second != false)value +=1;
+            if(minute.second != false)
+            {
+                value +=1;
+            }
             hour = parse(crons.at(1), value, 0, 23);
 
             value = QDate::currentDate().day();
-            if(hour.second != false)value += 1;
+            if(hour.second != false)
+            {
+                value += 1;
+            }
             dayOfMonth = parse(crons.at(2), value, 1, QDate::currentDate().daysInMonth());
 
             value = QDate::currentDate().month();
-            if(dayOfMonth.second != false)value += 1;
+            if(dayOfMonth.second != false)
+            {
+                value += 1;
+            }
             month = parse(crons.at(3), value, 1, 12);
 
-            year.first = QDate::currentDate().year();
-            if(month.second != false)year.first += 1;
+            value = QDate::currentDate().year();
+            if(month.second != false)
+            {
+                value += 1;
+            }
+            year = parse(crons.at(5), value, QDate::currentDate().year(), QDate::currentDate().year()+1);
 
             value = QDate::currentDate().dayOfWeek();
             dayOfWeek = parse(crons.at(4), value, 1, 7);
 
-            if(dayOfWeek.first < value)dayOfWeek.first = value - dayOfWeek.first;
-            else if(dayOfWeek.first == value) dayOfWeek.first = 0;
-            else dayOfWeek.first = 7 - dayOfWeek.first + value;
+            if(dayOfWeek.first < value)
+            {
+                dayOfWeek.first = value - dayOfWeek.first;
+            }
+            else
+            {
+                if(dayOfWeek.first == value)
+                {
+                    dayOfWeek.first = 0;
+                }
+                else
+                {
+                    dayOfWeek.first = 7 - dayOfWeek.first + value;
+                }
+            }
 
             value = QDate::currentDate().day() + dayOfWeek.first;
             try
             {
-                if(crons.at(2) == "*")dayOfMonth.first = value;
-                else if(crons.at(4) == "*")dayOfMonth.first = value;
-                else if(dayOfMonth.first != value)
+                if(crons.at(2) == "*")
                 {
-                    throw value;
+                    dayOfMonth.first = value;
+                }
+                else
+                {
+                    if(crons.at(4) == "*")
+                    {
+                        dayOfMonth.first = value;
+                    }
+                    else
+                    {
+                        if(dayOfMonth.first != value)
+                        {
+                            throw value;
+                        }
+                    }
                 }
             }
             catch(int)
@@ -108,6 +145,12 @@ QDateTime CronParser::calcTaskDate()
         std::cout << "[Scheduller]: Error: Invalid cronjob \"";
         std::cout << cronJob.toStdString() << "\"\n";
     }
+
+    if(optimalDate <= QDateTime::currentDateTime())
+    {
+        emit isSingle(true);
+    }
+
     return optimalDate;
 }
 
@@ -146,7 +189,9 @@ QPair<int, bool> CronParser::parse(QString cronJob, int var, int minLimit, int m
         try
         {
             if(result.at(i).toInt() < minLimit && result.at(i).toInt() > maxLimit)
+            {
                 throw result.at(i);
+            }
             else
             {
                 res.first = result.at(i).toInt();
@@ -164,10 +209,15 @@ QPair<int, bool> CronParser::parse(QString cronJob, int var, int minLimit, int m
         try
         {
             if(cronJob.toInt() < minLimit || cronJob.toInt() > maxLimit)
+            {
                 throw cronJob.toInt();
+            }
             else
             {
-                if(cronJob.toInt() < var) res.second = true;
+                if(cronJob.toInt() < var)
+                {
+                    res.second = true;
+                }
                 res.first = cronJob.toInt();
             }
         }
@@ -180,49 +230,83 @@ QPair<int, bool> CronParser::parse(QString cronJob, int var, int minLimit, int m
     else
     {
         if(star.exactMatch(cronJob))
+        {
             step = 1;
-        else if(starStep.exactMatch(cronJob))
-            step = cronJob.section("/", 1, 1).toInt();
-        else if(startStep.exactMatch(cronJob))
-        {
-            start = cronJob.section("/", 0, 0).toInt();
-            step = cronJob.section("/", 1, 1).toInt();
-        }
-        else if(startFinish.exactMatch(cronJob))
-        {
-            start = cronJob.section("-", 0, 0).toInt();
-            finish = cronJob.section("-", 1, 1).toInt();
-        }
-        else if(startFinishStep.exactMatch(cronJob))
-        {
-            step = cronJob.section("/", 1, 1).toInt();
-            start = cronJob.section("-", 0, 0).toInt();
-            QString tmp = cronJob.section("-", 1, 1);
-            tmp = tmp.section("/", 0, 0);
-            finish = tmp.toInt();
         }
         else
-            start = -1;
-
+        {
+            if(starStep.exactMatch(cronJob))
+            {
+                step = cronJob.section("/", 1, 1).toInt();
+            }
+            else
+            {
+                if(startStep.exactMatch(cronJob))
+                {
+                    start = cronJob.section("/", 0, 0).toInt();
+                    step = cronJob.section("/", 1, 1).toInt();
+                }
+                else
+                {
+                    if(startFinish.exactMatch(cronJob))
+                    {
+                        start = cronJob.section("-", 0, 0).toInt();
+                        finish = cronJob.section("-", 1, 1).toInt();
+                    }
+                    else
+                    {
+                        if(startFinishStep.exactMatch(cronJob))
+                        {
+                            step = cronJob.section("/", 1, 1).toInt();
+                            start = cronJob.section("-", 0, 0).toInt();
+                            QString tmp = cronJob.section("-", 1, 1);
+                            tmp = tmp.section("/", 0, 0);
+                            finish = tmp.toInt();
+                        }
+                        else
+                        {
+                            start = -1;
+                        }
+                    }
+                }
+            }
+        }
         try
         {
             if(start < minLimit || start > maxLimit)
+            {
                 throw start;
-            else if(finish < minLimit || finish > maxLimit)
-                throw finish;
-            else if(step < minLimit || step > maxLimit)
-                throw step;
+            }
             else
             {
-                int i = start;
-                while(i < var && i <= finish)
-                    i += step;
-                if(i > finish)
+                if(finish < minLimit || finish > maxLimit)
                 {
-                    res.first = start;
-                    res.second = true;
+                    throw finish;
                 }
-                else res.first = i;
+                else
+                {
+                    if(step < minLimit || step > maxLimit)
+                    {
+                        throw step;
+                    }
+                    else
+                    {
+                        int i = start;
+                        while(i < var && i <= finish)
+                        {
+                            i += step;
+                        }
+                        if(i > finish)
+                        {
+                            res.first = start;
+                            res.second = true;
+                        }
+                        else
+                        {
+                            res.first = i;
+                        }
+                    }
+                }
             }
         }
         catch(int)

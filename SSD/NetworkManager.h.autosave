@@ -1,0 +1,42 @@
+#ifndef NETWORKMANAGER_H
+#define NETWORKMANAGER_H
+
+#include <QObject>
+#include <QNetworkAccessManager>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QUrl>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QTcpServer>
+#include <QTcpSocket>
+
+class NetworkManager : public QObject
+{
+    Q_OBJECT
+public:
+    explicit NetworkManager(QObject *parent = 0);
+    ~NetworkManager();
+    
+    bool checkConnection();   //подключение к ЦС
+                    //каждые 15 секунд вызывать, только после этого выполнять запуск
+    //метод get, который будет запрашивать данные с ЦС
+    //метод post передает данныена ЦС
+private:
+    QNetworkAccessManager*  manager;
+    QTcpServer              server;
+signals:
+    void                    sig_NewJsonObject(QString, QJsonObject);
+    void                    sig_NewJsonObject(QString, QJsonArray);
+    void                    sig_DeleteRecord(QString, QString);
+    void                    sig_UpdateRecord(QString, QJsonObject, QString);
+    
+public slots:
+    void                    slt_tConnectionHandler();
+    //void                    slt_ReplyFinishedHandler(QNetworkReply * reply);
+    void                    doDownload(const QString tableName, const QByteArray & data);
+    void                    doUpload(const QString &table, const QByteArray& data);
+    void                    slt_SendPart(const QString tableName, QList <QJsonObject> list);
+};
+
+#endif // NETWORKMANAGER_H
