@@ -25,7 +25,7 @@ private:
 signals:
 
 public slots:
-    void                    slt_tConnectionHandler();
+    void                    slt_ConnectionHandler();
 
 };
 

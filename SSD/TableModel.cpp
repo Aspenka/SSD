@@ -124,11 +124,11 @@ TableSchema * DeviceModel::getTableSchema()
     TableSchema *schem = new TableSchema();
     schem->setTableName("device");
     QStringList list {
-                        "uid"
+                        "device_uid"
                       };
     schem->setFields(list);
-    schem->setPrimaryKey(QStringList({"uid"}));
-    schem->setForeignKey(QStringList({"uid"}));
+    schem->setPrimaryKey(QStringList({"device_uid"}));
+    schem->setForeignKey(QStringList({"device_uid"}));
     return schem;
 }
 
@@ -170,16 +170,16 @@ TableSchema * NetAddressTypeModel::getTableSchema()
     TableSchema *schem = new TableSchema();
     schem->setTableName("net_address_type");
     QStringList list {
-                        "uid",
-                        "name"
+                        "net_address_type_uid",
+                        "name_ru"
                       };
     schem->setFields(list);
-    schem->setPrimaryKey(QStringList({"uid"}));
-    schem->setForeignKey(QStringList({"uid"}));
+    schem->setPrimaryKey(QStringList({"net_address_type_uid"}));
+    schem->setForeignKey(QStringList({"net_address_type_uid"}));
     return schem;
 }
 
-QList <NetAddressTypeModel *> NetAddressTypeModel::toNetAddressTypeModel(QList<Model *> modelList)
+QList <NetAddressTypeModel * > NetAddressTypeModel::toNetArrdessTypeModel(QList<Model *> modelList)
 {
     QList <NetAddressTypeModel *> list;
     for(int i = 0; i < modelList.size(); i++)
@@ -215,21 +215,21 @@ NetAddressModel * NetAddressModel::getModel()
 TableSchema * NetAddressModel::getTableSchema()
 {
     TableSchema *schem = new TableSchema();
-    schem->setTableName("net_address_type");
+    schem->setTableName("net_address");
     QStringList list {
-                        "uid",
+                        "net_address_uid",
                         "value",
                         "priority",
                         "net_address_type_uid",
                         "device_uid"
                       };
     schem->setFields(list);
-    schem->setPrimaryKey(QStringList({"uid"}));
+    schem->setPrimaryKey(QStringList({"net_address_uid"}));
     schem->setForeignKey(QStringList({"net_address_type_uid, device_uid"}));
     return schem;
 }
 
-QList <NetAddressModel *> NetAddressModel::toNetAddressModel(QList<Model *> modelList)
+QList <NetAddressModel * > NetAddressModel::toNetArrdessModel(QList<Model *> modelList)
 {
     QList <NetAddressModel *> list;
     for(int i = 0; i < modelList.size(); i++)
@@ -243,55 +243,3 @@ NetAddressModel::~NetAddressModel()
 {
 
 }
-
-
-/*=================IncomeModel=======================
-IncomeModel::IncomeModel(Model *parent) : Model(parent)
-{
-    if(parent != 0)
-    {
-        copy(*parent);
-    }
-    isNew = true;
-    relation.link = {"income_message.device_uid", "device.uid"};
-    relation.type = ONE_TO_ONE;
-    schema = getTableSchema();
-}
-
-IncomeModel * IncomeModel::getModel()
-{
-    return this;
-}
-
-TableSchema * IncomeModel::getTableSchema()
-{
-    TableSchema *schem = new TableSchema();
-    schem->setTableName("device");
-    QStringList list {
-                        "uid",
-                        "text",
-                        "receive_status",
-                        "process_status",
-                        "device_uid",
-                        "error"
-                      };
-    schem->setFields(list);
-    schem->setPrimaryKey(QStringList({"uid"}));
-    schem->setForeignKey(QStringList({"device_uid"}));
-    return schem;
-}
-
-QList <IncomeModel *> IncomeModel::toIncomeModel(QList<Model *> modelList)
-{
-    QList <IncomeModel *> list;
-    for(int i = 0; i < modelList.size(); i++)
-    {
-        list.append(static_cast <IncomeModel *> (modelList[i]));
-    }
-    return list;
-}
-
-IncomeModel::~IncomeModel()
-{
-
-}*/

@@ -2,7 +2,10 @@
 #define DCSERVER_H
 
 #include <QObject>
+#include <QJsonDocument>
 #include "TaskManager.h"
+#include "var.h"
+
 
 //класс, управляющий ПО ССД
 
@@ -15,7 +18,13 @@ public:
     void            startServer ( );
 
 private:
-    TaskManager     *taskMan;
+    /*TaskManager         *taskMan;
+    DeviceModel         *device;
+    NetAddressModel     *netAddress;
+    NetAddressTypeModel *netAddressType;*/
+    void parse(QString tableName, QJsonDocument data);
+    template <class T>
+    void addToTable(QList <Var> list, T *& model);
 
 signals:
 

@@ -28,7 +28,10 @@ SOURCES += main.cpp \
     DCServer.cpp \
     TableModel.cpp \
     Message.cpp \
-    Request.cpp
+    Request.cpp \
+    var.cpp \
+    Action.cpp \
+    UpdateAction.cpp
 
 HEADERS += \
     Task.h \
@@ -43,4 +46,7 @@ HEADERS += \
     DCServer.h \
     TableModel.h \
     Message.h \
-    Request.h
+    Request.h \
+    var.h \
+    Action.h \
+    UpdateAction.h

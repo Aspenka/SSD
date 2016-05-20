@@ -13,6 +13,9 @@ INPUT(
 ./debug\TableModel.o
 ./debug\Message.o
 ./debug\Request.o
+./debug\var.o
+./debug\Action.o
+./debug\UpdateAction.o
 ./debug\moc_Task.o
 ./debug\moc_TaskManager.o
 ./debug\moc_Scheduler.o
@@ -24,4 +27,5 @@ INPUT(
 ./debug\moc_HTTPServer.o
 ./debug\moc_DCServer.o
 ./debug\moc_Request.o
+./debug\moc_Action.o
 );

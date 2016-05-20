@@ -4,7 +4,7 @@
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
-    DCServer serv;
-    serv.startServer();
+    DCServer *server = new DCServer();
+    server->startServer();
     return a.exec();
 }

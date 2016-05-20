@@ -53,6 +53,7 @@ public:
 ======================================================*/
 class NetAddressTypeModel : public Model
 {
+public:
     NetAddressTypeModel (Model *parent = 0);
     ~NetAddressTypeModel();
 
@@ -66,6 +67,7 @@ class NetAddressTypeModel : public Model
 ======================================================*/
 class NetAddressModel : public Model
 {
+public:
     NetAddressModel (Model *parent = 0);
     ~NetAddressModel();
 
@@ -74,13 +76,4 @@ class NetAddressModel : public Model
     NetAddressModel * getModel();
 };
 
-/*class IncomeModel : public Model
-{
-    IncomeModel (Model *parent = 0);
-    ~IncomeModel();
-
-    static TableSchema * getTableSchema();
-    static QList <IncomeModel *> toIncomeModel (QList <Model *> modelList);
-    IncomeModel * getModel();
-};*/
 #endif // TABLEMODEL_H

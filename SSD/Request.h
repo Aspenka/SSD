@@ -8,13 +8,20 @@ class Request : public QObject
 {
     Q_OBJECT
 public:
-    explicit Request(QString requestUrl, QObject *parent = 0);
+    explicit Request(QString tableName = "", QObject *parent = 0);
     ~Request();
 
-    void post();
-    void get();
+    void post(QString command);
+    QJsonDocument get();
+    void setTablename(QString tableName);
 private:
-    QString url;
+    QString tabName,
+            url,
+            part1,
+            part2;
+
+    QString getTableName(QString tableName);
+    QString getUrl();
 signals:
 
 public slots:

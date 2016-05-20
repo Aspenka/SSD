@@ -13,6 +13,9 @@ INPUT(
 ./release\TableModel.o
 ./release\Message.o
 ./release\Request.o
+./release\var.o
+./release\Action.o
+./release\UpdateAction.o
 ./release\moc_Task.o
 ./release\moc_TaskManager.o
 ./release\moc_Scheduler.o
@@ -24,4 +27,5 @@ INPUT(
 ./release\moc_HTTPServer.o
 ./release\moc_DCServer.o
 ./release\moc_Request.o
+./release\moc_Action.o
 );

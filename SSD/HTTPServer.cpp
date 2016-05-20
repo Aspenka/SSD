@@ -1,4 +1,6 @@
 #include "HTTPServer.h"
+#include "Message.h"
+#include "Request.h"
 
 HTTPServer::HTTPServer(QObject *parent) : QObject(parent), server(this)
 {
@@ -7,11 +9,15 @@ HTTPServer::HTTPServer(QObject *parent) : QObject(parent), server(this)
 
 void HTTPServer::start()
 {
-    if(server.listen(QHostAddress::Any, 8080))
+    if(server.listen(QHostAddress::Any, 8081))
     {
-        qDebug() << "[NetworkManager:]\tServer is started\n"
-                    "[NetworkManager:]\tListening...";
-        connect(&server, SIGNAL(newConnection()), this, SLOT(slotConnectionHandler()));
+        qDebug() << "[]\tHTTP Server is started\n"
+                    "[]\tListening...";
+        connect(&server, SIGNAL(newConnection()), this, SLOT(slt_ConnectionHandler()));
+
+        Income * income = new Income();
+        Request * r = new Request();
+        r->post("get_data");
     }
     else
     {
@@ -19,7 +25,7 @@ void HTTPServer::start()
     }
 }
 
-void HTTPServer::slt_tConnectionHandler()
+void HTTPServer::slt_ConnectionHandler()
 {
     qDebug() << "[HTTPServer:]\tHave a new connection\n";
     QTcpSocket * socket = server.nextPendingConnection();
@@ -27,31 +33,25 @@ void HTTPServer::slt_tConnectionHandler()
     QByteArray request(socket->readAll());
     QStringList buf = QString(request).split(' ');
 
-    if(buf.at(0) == "GET")
+    qDebug() << "Data received:\t" << buf.at(0);
+
+    if(buf.at(0) == "POST")
     {
-        //выполнение задачи, которая пришла в параметрах
-        //здесь приходят таски, не созраняющиеся в БД (синглшоты)
-        //крона не будет
-        //УРАА!!
-        /*QString responce = "HTTP/1.1 200 OK\r\n\r\n%1";
-        socket->write(responce.arg(QTime::currentTime().toString()).toLatin1());
+        QString responce = "HTTP/1.1 200 OK\r\n\r\n%1";
+        /*socket->write(responce.arg(QTime::currentTime().toString()).toLatin1());
         socket->waitForBytesWritten();
         socket->disconnectFromHost();
         socket->deleteLater();*/
-        return;
-    }
-    if(buf.at(0) == "POST")
-    {
         //добавление строки в БД
-        /*QString destUrl(buf.at(1));
-        sock->waitForReadyRead();
-        QByteArray data(sock->readAll());
+        QString destUrl(buf.at(1));
+        socket->waitForReadyRead();
+        QByteArray data(socket->readAll());
         //qDebug() << "put " << QString(data) << " into " << destUrl;
-        QString responce = "HTTP/1.1 200 OK\r\n\r\n";
-        sock->write(responce.toLatin1());
-        sock->waitForBytesWritten();
-        sock->disconnectFromHost();
-        sock->deleteLater();
+        //QString responce = "HTTP/1.1 200 OK\r\n\r\n";
+        socket->write(responce.toLatin1());
+        socket->waitForBytesWritten();
+        socket->disconnectFromHost();
+        socket->deleteLater();
 
         QByteArray payload;
         payload.append(QString(data));
@@ -61,48 +61,9 @@ void HTTPServer::slt_tConnectionHandler()
         QJsonDocument doc = QJsonDocument::fromJson(payload);
         QJsonObject jObj = doc.object();
         QString table = destUrl.split('/').at(2);
-        //qDebug() << "table: " << table << " object: " << jObj;
-        emit signalNewJsonObject(table, jObj);*/
-        return;
-    }
-    if(buf.at(0) == "PUT")
-    {
-        //изменение строки в БД
-        /*sock->waitForReadyRead();
-        QByteArray data(sock->readAll());
-
-        QString responce = "HTTP/1.1 200 OK\r\n\r\n";
-        sock->write(responce.toLatin1());
-        sock->waitForBytesWritten();
-        sock->disconnectFromHost();
-        sock->deleteLater();
-
-        //qDebug() << "PUT";
-        QString url = buf.at(1);
-        //qDebug() << url;
-        QStringList values = url.split('/');
-        //qDebug() << values.at(1) << " " << values.at(2);
-        QJsonObject jObj = QJsonDocument::fromJson(data).object();
-        //qDebug() << jObj;
-        emit signalUpdateRecord(values.at(1), jObj, values.at(2));*/
-        return;
-    }
-    if(buf.at(0) == "DELETE")
-    {
-        //удаление строки из БД
-        /*QString responce = "HTTP/1.1 200 OK\r\n\r\n%1";
-        sock->write(responce.arg(QTime::currentTime().toString()).toLatin1());
-        sock->waitForBytesWritten();
-        sock->disconnectFromHost();
-        sock->deleteLater();
-
-        //qDebug() << "DELETE";
-        QString url = buf.at(1);
-        //qDebug() << url;
-        QStringList values = url.split('/');
-        //qDebug() << values.at(1) << " " << values.at(2);
-        emit signalDeleteRecord(values.at(1), values.at(2));*/
-        return;
+        qDebug() << "table: " << table << " object: " << jObj;
+        //emit signalNewJsonObject(table, jObj);
+        //return;
     }
 }
 
