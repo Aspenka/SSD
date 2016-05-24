@@ -33,13 +33,13 @@ void Request::post(QString command)
     QJsonObject json;
     json.insert("request", QJsonValue(command));
     QJsonDocument document(json);
-
+    QByteArray data = document.toJson();
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
     QEventLoop eLoop;
     QNetworkRequest request(QUrl("http://localhost:8080/"));
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    QByteArray data = document.toJson();
+    request.setHeader(QNetworkRequest::ContentLengthHeader, data.count());
+
     QNetworkReply *reply = manager->post(request, data);
     QObject::connect(manager, SIGNAL(finished(QNetworkReply*)), &eLoop, SLOT(quit()));
     try
@@ -56,7 +56,7 @@ void Request::post(QString command)
     }
     catch(QNetworkReply *)
     {
-        qDebug() << "[!]ERROR:\t" << reply->errorString();
+        //qDebug() << "[!]ERROR:\t" << reply->errorString();
     }
 }
 
