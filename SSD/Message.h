@@ -33,7 +33,7 @@ public:
     static TableSchema *getTableSchema();
     static QList <Income *> toIncome(QList <Message *> modelList);
     Income * getModel();
-    void    execute();
+    void execute();
 };
 
 /*======================================================
@@ -48,7 +48,7 @@ public:
     static TableSchema *getTableSchema();
     static QList <Outcome *> toIncome(QList <Message *> modelList);
     Outcome * getModel();
-    void    execute();
+    bool    execute();
     void    send();
 };
 #endif // MESSAGE_H

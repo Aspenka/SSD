@@ -18,10 +18,7 @@ public:
     void            startServer ( );
 
 private:
-    /*TaskManager         *taskMan;
-    DeviceModel         *device;
-    NetAddressModel     *netAddress;
-    NetAddressTypeModel *netAddressType;*/
+    //TaskManager         *taskMan;
     void parse(QString tableName, QJsonDocument data);
     template <class T>
     void addToTable(QList <Var> list, T *& model);

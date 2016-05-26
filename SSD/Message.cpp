@@ -1,4 +1,5 @@
 #include "Message.h"
+#include "Request.h"
 
 //=======================Message================
 Message::Message(Model *parent) : Model(parent)
@@ -76,7 +77,8 @@ QList <Income *> Income::toIncome(QList<Message *> modelList)
 
 void Income::execute()
 {
-
+    setReceived(true);
+    //write to database
 }
 
 Income::~Income()

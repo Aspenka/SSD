@@ -2,6 +2,7 @@
 #include "Message.h"
 #include "Request.h"
 
+
 HTTPServer::HTTPServer(QObject *parent) : QObject(parent), server(this)
 {
     manager = new QNetworkAccessManager(this);
@@ -15,9 +16,14 @@ void HTTPServer::start()
                     "[]\tListening...";
         connect(&server, SIGNAL(newConnection()), this, SLOT(slt_ConnectionHandler()));
 
+        //----income
         Income * income = new Income();
         Request * r = new Request();
-        r->post("get_data");
+        if(r->post("get_data") == true)
+        {
+            income->execute();
+        }
+        //r->post("get_data");
     }
     else
     {

@@ -28,7 +28,7 @@ void Request::setTablename(QString tableName)
     tabName = getTableName(tableName);
 }
 
-void Request::post(QString command)
+bool Request::post(QString command)
 {
     QJsonObject json;
     json.insert("request", QJsonValue(command));
@@ -52,11 +52,13 @@ void Request::post(QString command)
         else
         {
             qDebug() << "[]:\tSent request";
+            return true;
         }
     }
     catch(QNetworkReply *)
     {
-        //qDebug() << "[!]ERROR:\t" << reply->errorString();
+        qDebug() << "[!]ERROR:\t" << reply->errorString();
+        return false;
     }
 }
 
