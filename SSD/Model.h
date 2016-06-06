@@ -33,6 +33,7 @@ public:
     QStringList                 getSelectedFields(QStringList fieldList);
     QVariant                    getRecord(QString fieldName);
     QStringList                 getFields();
+    QList <Model *>             getRelationData(QString relationName);
 
     bool                        save(QStringList fields = {});
     bool                        remove();

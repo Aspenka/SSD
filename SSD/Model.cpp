@@ -73,6 +73,13 @@ QStringList Model::getSelectedFields(QStringList fieldList)
     return result;
 }
 
+QList <Model*> Model::getRelationData(QString relationName)
+{
+    relation_data_t data = schema->getRelationData();
+    QList <Model*> list = data.value(relationName);
+    return list;
+}
+
 void Model::setField(QString fieldName, QVariant value)
 {
     try
@@ -283,6 +290,7 @@ TableSchema *Model::getSchema()
 {
     return schema;
 }
+
 
 void Model::setRelation(Model *outModel, QString relationName)
 {

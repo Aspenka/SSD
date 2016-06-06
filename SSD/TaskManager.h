@@ -4,7 +4,7 @@
 #include <QObject>
 #include <QList>       
 #include "Task.h"
-#include "Scheduler.h"
+#include "Timer.h"
 
 /*===========================================================================
  Класс TaskManager предназначен для управления задачами,
@@ -21,6 +21,7 @@
     sheduler - объект планировщика задач;
     limit - предельное значение на одновременную
             обработку задач
+    timer - перечень таймеров для списка задач
 
  методы класса:
 void addTask(Task &task) - метод добавляет новую задачу в список;
@@ -31,11 +32,16 @@ void removeTask(Task task) - метод удаляет задачу из спи�
 void clear() - метод очищает перечень задач;
 void print() - метод отображает содержимое списка задач в консоль;
 void run() - метод запускает обработчик задач;
+void stop() - метод останавливает обработку задач;
 void handleTask() - метод запускает задачу в обработку;
 void updateTask (int index, int status = 0) - метод изменяет статус
-                                              задачи
+                                              задачи;
 void setConfig() - метод устанавливает параметры обработчика задач
-                   из конфигурационного файла
+                   из конфигурационного файла;
+void startTimer() - метод запускает таймеры для задач.
+сигналы класса:
+    sig_callTask(QString deviceUid) - сигнал высылается для задачи,
+                                      которую необходимо запустить.
 слоты класса:
     void slt_Run ( int index) -
     void slt_OnDone (Task task) - метод-слот, реагирущий на сигнал о
@@ -49,7 +55,6 @@ class TaskManager : public QObject
     Q_OBJECT
 public:
     explicit TaskManager ( QObject *parent = 0 );
-    TaskManager ( QByteArray data, QObject *parent = 0 );
     ~TaskManager();
 
     void                addTask (Task &task);
@@ -58,19 +63,20 @@ public:
     void                clear ();
     void                print ();
     void                run ();
+    void                stop();
 
 private:
+    QVector <Timer *>   timer;
     QList <Task>        taskList;
-    Scheduler           scheduler;
     int                 limit;
 
     void                updateTask (int index, int status = 0);
-    void                parse ( QByteArray data );
     void                handleTask();
     void                setConfig();
+    void                startTimer();
 
 signals:
-
+    void                sig_callTask(QString deviceUid);
 public slots:
     void                slt_Run ( int index);
     void                slt_OnDone (Task task);

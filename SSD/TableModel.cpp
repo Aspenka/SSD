@@ -61,8 +61,8 @@ TargetModel::TargetModel(Model *parent) : Model(parent)
         copy(*parent);
     }
     isNew = true;
-    //relation.link = {"target.task_uid", "task.uid"};
-    //relation.type = ONE_TO_ONE;
+    relation.link = {"target.task_uid", "task.uid"};
+    relation.type = ONE_TO_MANY;
     schema = getTableSchema();
 }
 

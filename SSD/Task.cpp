@@ -3,7 +3,6 @@
 
 Task::Task(QObject *parent) : QObject(parent)
 {
-    //setSingle(false);
     setStatus(NEW_TASK);
     query = new Query(TaskModel::getTableSchema());
     model = new TaskModel(query->getEmpty());
@@ -19,6 +18,7 @@ void Task::copy(const Task &obj)
     cronjob = obj.cronjob;
     status = obj.status;
     uid = obj.uid;
+    deviceUid = obj.deviceUid;
     parameters = obj.parameters;
     model = obj.model;
     query = obj.query;
@@ -31,6 +31,7 @@ bool Task::operator == ( const Task &right )
          (parameters == right.parameters) &&
          (model == right.model) &&
          (uid == right.uid) &&
+         (deviceUid == right.deviceUid) &&
          (query == right.query))
     {
         return true;
@@ -72,6 +73,16 @@ void Task::setCronjob(QString cron)
     cronjob = cron;
 }
 
+void Task::setDeviceUid(QString uid)
+{
+    deviceUid = uid;
+}
+
+QString Task::getDeviceUid()
+{
+    return deviceUid;
+}
+
 int Task::getUid()
 {
     return uid;
@@ -96,7 +107,7 @@ void Task::save()
     model->setField("parameters", parameters);
     if(model->save())
     {
-        qDebug() << "[Task::edit]:\tRecord is changed";
+        qDebug() << "[TASK]:\tRecord is changed";
     }
 }
 
@@ -104,7 +115,7 @@ void Task::remove()
 {
     if(model->remove())
     {
-        qDebug() << "[Task::remove]:\tRecord deleted";
+        qDebug() << "[TASK]:\tRecord deleted";
     }
 }
 
@@ -123,7 +134,7 @@ void Task::edit(int taskStatus)
     }
     if(model->save(list))
     {
-        qDebug() << "[Task::edit]:\tRecord is changed";
+        qDebug() << "[TASK]:\tRecord is changed";
     }
 }
 
@@ -133,6 +144,7 @@ void Task::print()
     qDebug() << "uid:\t" << uid;
     qDebug() << "cronjob:\t" << cronjob;
     qDebug() << "status:\t" << status;
+    qDebug() << "device_uid:\t" << deviceUid;
 }
 
 bool Task::isEmpty()
@@ -152,6 +164,18 @@ QList<Task> Task::getTaskList()
     QList <Task> taskList;
     query->clear();
     QList <TaskModel *> list = TaskModel::toTaskModel(query->getAll());
+
+    Query *tarQuery = new Query(TargetModel::getTableSchema());
+    TargetModel tar = new TargetModel(tarQuery->getEmpty());
+    model->setRelation(&tar, "task_to_target");
+    query->updateSchema(model);
+    QStringList selLlist = tar.getSelectedFields(QStringList({"device_uid"}));
+    query->setSelectedFields(selLlist);
+    query->withInner("task_to_target");
+    model = static_cast <TaskModel *> (query->getOne());
+    QList <TargetModel *> deviceList = TargetModel::toTargetModel(model->getRelationData("task_to_target"));
+    query->clear();
+
     for(int i = 0; i < list.size(); i++)
     {
         Task t;
@@ -161,6 +185,7 @@ QList<Task> Task::getTaskList()
 
         t.query = query;
         t.model = list[i];
+        t.setDeviceUid(deviceList[i]->getRecord("device_uid").toString());
         taskList.append(t);
     }
     return taskList;

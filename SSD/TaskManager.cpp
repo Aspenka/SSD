@@ -13,28 +13,34 @@ TaskManager::TaskManager ( QObject *parent ) : QObject ( parent )
 }
 
 //--
-TaskManager::TaskManager (QByteArray data, QObject *parent) : QObject ( parent )
-{
-    //parse(data);----------------
-}
-
-//--
 void TaskManager::run()
 {
-    Task task;
-    if(!task.isEmpty())
-    {
-        taskList.append(task.getTaskList());
-    }
     setConfig();
-    //parse ( );  //--
+    Task task;
+    int size = task.getTaskList().size();
+    try
+    {
+        if(size <= limit)
+        {
+            if(!task.isEmpty())
+            {
+                taskList.append(task.getTaskList());
+            }
+        }
+        else
+        {
+            throw size;
+        }
+    }
+    catch(int)
+    {
+        qDebug() << "[!][TASK MANAGER]:\tError! Task list stack overflow!";
+    }
 
     try
     {
         if ( !taskList.empty() )
         {
-            QObject::connect( &scheduler, SIGNAL(sigDone(int)), this, SLOT(slt_taskDone(int)));
-            QObject::connect( &scheduler, SIGNAL(sig_callTask(int)), this, SLOT(slt_Run(int)) );
             for ( int i = 0; i < taskList.size(); i++ )
             {
                 QObject::connect( &taskList[i], SIGNAL(sig_done(Task)), this, SLOT(slt_OnDone(Task)) );
@@ -49,7 +55,7 @@ void TaskManager::run()
     }
     catch ( QList <Task> )
     {
-        qDebug() << "[TaskManager.run()]:   taskList is empty!";
+        qDebug() << "[!][TASK MANAGER]:\ttaskList is empty!";
     }
 }
 
@@ -81,8 +87,10 @@ void TaskManager::addTask (Task & task)
 ======================================================*/
 void TaskManager::removeTask ( int index )
 {
-    taskList[index].remove();
-    scheduler.remove(index);
+    taskList[index].remove();    
+    qDebug() << "[TASK MANAGER]:\ttimer " <<  index << " Stopped";
+    disconnect(timer[index], SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
+    timer.remove(index, 1);
     taskList.removeAt(index);
 }
 
@@ -99,7 +107,9 @@ void TaskManager::removeTask ( Task task )
         if ( taskList[i] == task )
         {
             taskList[i].remove();
-            scheduler.remove(i);
+            disconnect(timer[i], SIGNAL(timeout(int)), this, SLOT(slt_Reaction(int)));
+            qDebug() << "[TASK MANAGER]:\ttimer " <<  i << " Stopped";
+            timer.remove(i, 1);
             taskList.removeAt(i);
             break;
         }
@@ -127,8 +137,7 @@ void TaskManager::handleTask ()
         taskList[i].setStatus(PROCESSING);
         updateTask(i, PROCESSING);
     }
-    scheduler.append(taskList);
-    scheduler.start();
+    startTimer();
 }
 
 /*======================================================
@@ -142,70 +151,6 @@ void TaskManager::handleTask ()
 void TaskManager::updateTask ( int index, int status)
 {
     taskList[index].edit(status);
-}
-
-/*======================================================
-метод обрабатывает пакет, поступивший из ЦС
-
-параметры метода:
-    QByteArray data - пакет с данными
-======================================================*/
-void TaskManager::parse ( QByteArray data )
-{
-
-}
-
-//заглушка
-void TaskManager::parse()
-{
-    QSettings set( "tasks.ini", QSettings::IniFormat );
-    int size = set.beginReadArray("tasks");
-    try
-    {
-        if ( size <= limit )
-        {
-            for ( int i = 0; i < size; i++ )
-            {
-                set.setArrayIndex( i );
-                Task task;
-                task.setCronjob ( set.value("cronjob").toString() );
-                //task.setDevAddress ( set.value("devAddr").toString() );
-                //task.setDevType ( set.value("devType").toString() );
-                //task.setLogin ( set.value("login").toString() );
-                //task.setPassword ( set.value("password").toString() );
-                //task.setTask ( set.value("task").toString() );
-                //task.setPriority( set.value("priority").toInt() );
-                QString temp = set.value("arguments").toString();
-                QStringList list;
-                if(temp != "")
-                {
-                    if(temp.contains(","))
-                    {
-                        list = temp.split(",");
-                    }
-                    else
-                    {
-                        list.append(temp);
-                    }
-                    //task.setArgums(list);
-                }
-                else
-                {
-                    //task.setArgums(list);
-                }
-                task.save();
-                addTask( task );
-            }
-        }
-        else
-        {
-            throw limit;
-        }
-    }
-    catch (int)
-    {
-        qDebug() << "[TaskManager.parser()]:    Error! Amount of tasks exceeds the limit value";
-    }
 }
 
 //заглушка
@@ -232,14 +177,40 @@ void TaskManager::slt_OnDone(Task task)
 ======================================================*/
 void TaskManager::slt_Run (int index)
 {
-    qDebug() << "[" << QDateTime::currentDateTime().toString("dd/MM/yy hh:mm:ss")
-             << "]: Call task " << index << endl;
+    qDebug() << "[TASK MANAGER]" << "[" << QDateTime::currentDateTime().toString("dd/MM/yy hh:mm:ss")
+             << "]:\tCall device " << taskList[index].getDeviceUid() << endl;
+    emit sig_callTask(taskList[index].getDeviceUid());
 }
 
 //--
 void TaskManager::slt_taskDone(int index)
 {
     updateTask(index, DONE);
+}
+
+//--
+void TaskManager::startTimer()
+{
+    qDebug() << "[TASK MANAGER]:\tStarting scheduler...\n";
+    for(int i=0; i<taskList.size(); i++)
+    {
+        Timer *t = new Timer();
+        timer.append(t);
+        connect (timer.at(i), SIGNAL(timeout(int)), this, SLOT(slt_Run(int)));
+        connect (timer.at(i), SIGNAL(done(int)), this, SLOT(slt_taskDone(int)));
+        timer[i]->start(taskList[i].getCronjob(), i);
+        qDebug() << "[TASK MANAGER]:\tTmer " << i << " have cron " << taskList[i].getCronjob();
+    }
+}
+
+void TaskManager::stop()
+{
+    qDebug() << "[TASK MANAGER]:\tScheduler stopped\n";
+    for( int i = 0; i < timer.size(); i++)
+    {
+        timer[i]->stop();
+        disconnect(timer[i], SIGNAL(timeout(int)), this, SLOT(slt_Run(int)));
+    }
 }
 
 /*======================================================

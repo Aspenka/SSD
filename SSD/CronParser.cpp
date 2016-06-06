@@ -87,7 +87,7 @@ QDateTime CronParser::calcTaskDate()
             {
                 value += 1;
             }
-            year = parse(crons.at(5), value, QDate::currentDate().year(), QDate::currentDate().year()+1);
+            year = parse(crons.at(5), value, QDate::currentDate().year() - 1, QDate::currentDate().year()+1);
 
             value = QDate::currentDate().dayOfWeek();
             dayOfWeek = parse(crons.at(4), value, 1, 7);
@@ -286,8 +286,11 @@ QPair<int, bool> CronParser::parse(QString cronJob, int var, int minLimit, int m
                 else
                 {
                     if(step < minLimit || step > maxLimit)
-                    {
-                        throw step;
+                    {                 
+                        if((var != QDate::currentDate().year())&&(var != minLimit)&&(var!=maxLimit))
+                        {
+                            throw step;
+                        }
                     }
                     else
                     {

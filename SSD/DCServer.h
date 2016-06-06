@@ -18,7 +18,7 @@ public:
     void            startServer ( );
 
 private:
-    //TaskManager         *taskMan;
+    TaskManager         *taskMan;
     void parse(QString tableName, QJsonDocument data);
     template <class T>
     void addToTable(QList <Var> list, T *& model);
@@ -26,6 +26,7 @@ private:
 signals:
 
 public slots:
+    void slt_callDevice(QString deviceUid);
 
 };
 

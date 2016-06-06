@@ -28,11 +28,8 @@ void Request::setTablename(QString tableName)
     tabName = getTableName(tableName);
 }
 
-bool Request::post(QString command)
+bool Request::post(QJsonDocument document)
 {
-    QJsonObject json;
-    json.insert("request", QJsonValue(command));
-    QJsonDocument document(json);
     QByteArray data = document.toJson();
 
     QNetworkAccessManager *manager = new QNetworkAccessManager(this);
@@ -51,13 +48,13 @@ bool Request::post(QString command)
         }
         else
         {
-            qDebug() << "[]:\tSent request";
+            qDebug() << "[REQUEST]:\tSent request";
             return true;
         }
     }
     catch(QNetworkReply *)
     {
-        qDebug() << "[!]ERROR:\t" << reply->errorString();
+        qDebug() << "[!][REQUEST]:\tERROR! " << reply->errorString();
         return false;
     }
 }
@@ -85,7 +82,7 @@ QJsonDocument Request::get()
     }
     catch(QNetworkReply *)
     {
-        qDebug() << "[!]ERROR:\t" << reply->errorString();
+        qDebug() << "[!][REQUEST]:\tERROR! " << reply->errorString();
     }
     return parser;
 }
@@ -120,7 +117,7 @@ QString Request::getTableName(QString tableName)
     }
     catch(QString)
     {
-        qDebug() << "[!][Error]:\tTable name is incorrect\n";
+        qDebug() << "[!][REQUEST]:\tERROR! Table name is incorrect\n";
     }
     return name;
 }

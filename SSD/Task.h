@@ -26,7 +26,9 @@ enum status_e
  3) status - статус выполнения задачи;
  4) uid - идентификационный номер задачи в ВБД;
  5) model - модель таблицы задач в ВБД;
- 6) query - объект, предназначенный для запросов на выборку из ВБД
+ 6) query - объект, предназначенный для запросов на выборку из ВБД;
+ 7) deviceUid - идентификатор устройства, для которого
+                предназначена задача.
 
  Методы класса:
  1) Task() - конструктор по умолчанию;
@@ -40,41 +42,45 @@ enum status_e
  7) void setParameters(QString params) - метод устанавливает
                                          параметры для выполнения
                                          задачи;
- 8) int getUid() - метод возвращает уникальный идентификатор
+ 8) void setDeviceUid(QString uid) - метод устанавливает значение
+                                     идентификатора УСПД;
+ 9) int getUid() - метод возвращает уникальный идентификатор
                    задачи из ВБД;
- 9) QList <Task> getTaskList() - метод формирует и возвращает
+ 10) QList <Task> getTaskList() - метод формирует и возвращает
                                  список задач;
- 10) QString getCronjob() - метод возвращает текущее
+ 11) QString getCronjob() - метод возвращает текущее
                             cron-выражение задачи;
- 11) QString getParameters() - метод возвращает текущие параметры
+ 12) QString getParameters() - метод возвращает текущие параметры
                                задачи;
- 12) bool isEmpty() - метод проверяет, пуста ли таблица задач в
+ 13) QString getDeviceUid() -  метод возвращает идентификатор УСПД,
+                               для которого предназначена задача;
+ 14) bool isEmpty() - метод проверяет, пуста ли таблица задач в
                       ВБД. Если таблица пуста, мтеод возвращает
                       true, в противном случае метод возвращает
                       false;
- 13) void save() - метод сохраняет текущую задачу в ВБД;
- 14) void remove() - метод удаляет текущую задачу из ВБД;
- 15) void edit(int taskStatus) - метод редактирует информацию о
+ 15) void save() - метод сохраняет текущую задачу в ВБД;
+ 16) void remove() - метод удаляет текущую задачу из ВБД;
+ 17) void edit(int taskStatus) - метод редактирует информацию о
                                  статусе задачи в ВБД;
- 16) void print() - метод выводит информацию о текущей
+ 18) void print() - метод выводит информацию о текущей
                     задаче в консоль приложения;
- 17) Task & operator = (Task const & obj) - метод перегружает
+ 19) Task & operator = (Task const & obj) - метод перегружает
                                             операцию присваивания;
- 18) bool operator ==
+ 20) bool operator ==
     (const Task & right) - метод перегружает операцию сравнения.
                            Если один объект данного класса равен
                            другому объекту этого же класса, метод
                            возвращает true, в противном случае
                            метод возвращает false;
- 19) bool operator !=
+ 21) bool operator !=
      (const Task & right) - метод перегружает операцию сравнения.
                            Если один объект данного класса не
                            равен другому объекту этого же класса,
                            метод возвращает true, в противном
                            случае метод возвращает false ;
- 20) void copy(const Task &obj) - метод копирует данные из объекта
+ 22) void copy(const Task &obj) - метод копирует данные из объекта
                                   obj в текущий объект;
- 21) void sig_done(Task) - сигнал, оповещающий о том, что задача
+ 23) void sig_done(Task) - сигнал, оповещающий о том, что задача
                            выполнена.
  ================================================================*/
 class Task : public QObject
@@ -89,11 +95,13 @@ public:
     void            setUid(int i);    
     void            setCronjob(QString cron);
     void            setParameters(QString params);
+    void            setDeviceUid(QString uid);
 
     int             getUid();
     QList <Task>    getTaskList();
     QString         getCronjob();
     QString         getParameters();
+    QString         getDeviceUid();
 
     bool            isEmpty();
 
@@ -108,7 +116,8 @@ public:
     bool            operator != (const Task & right);
 private:
     QString         cronjob,
-                    parameters;
+                    parameters,
+                    deviceUid;
     int             status,
                     uid;
     TaskModel       *model;

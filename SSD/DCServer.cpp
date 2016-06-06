@@ -9,13 +9,14 @@
 
 DCServer::DCServer ( QObject *parent) : QObject(parent )
 {
-
+    taskMan = new TaskManager();
 }
 
 void DCServer::startServer ( )
 {
     HTTPServer *server = new HTTPServer();
     server->start();
+
     //Request * r = new Request("net_address_type");
     //QJsonDocument data = r->get();
     //parse("net_address_type", data);
@@ -28,6 +29,10 @@ void DCServer::startServer ( )
     data = r->get();
     parse("device", data);*/
 
+
+
+    //QObject::connect(taskMan, SIGNAL(sig_callTask(QString)), this, SLOT(slt_callDevice(QString)));
+    //taskMan->run();
 }
 
 void DCServer::parse(QString tableName, QJsonDocument data)
@@ -75,6 +80,11 @@ void DCServer::addToTable(QList <Var> list, T *&model)
             qDebug() << "[]:\trecord saved in net_address_type";
         }
     }
+}
+
+void DCServer::slt_callDevice(QString deviceUid)
+{
+    taskMan->stop();
 }
 
 DCServer::~DCServer ( )

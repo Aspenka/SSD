@@ -11,7 +11,7 @@ public:
     explicit Request(QString tableName = "", QObject *parent = 0);
     ~Request();
 
-    void post(QString command);
+    bool post(QJsonDocument document);
     QJsonDocument get();
     void setTablename(QString tableName);
 private:

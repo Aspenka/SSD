@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_TaskManager_t {
-    QByteArrayData data[8];
-    char stringdata[61];
+    QByteArrayData data[10];
+    char stringdata[84];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -30,17 +30,20 @@ struct qt_meta_stringdata_TaskManager_t {
 static const qt_meta_stringdata_TaskManager_t qt_meta_stringdata_TaskManager = {
     {
 QT_MOC_LITERAL(0, 0, 11), // "TaskManager"
-QT_MOC_LITERAL(1, 12, 7), // "slt_Run"
-QT_MOC_LITERAL(2, 20, 0), // ""
-QT_MOC_LITERAL(3, 21, 5), // "index"
-QT_MOC_LITERAL(4, 27, 10), // "slt_OnDone"
-QT_MOC_LITERAL(5, 38, 4), // "Task"
-QT_MOC_LITERAL(6, 43, 4), // "task"
-QT_MOC_LITERAL(7, 48, 12) // "slt_taskDone"
+QT_MOC_LITERAL(1, 12, 12), // "sig_callTask"
+QT_MOC_LITERAL(2, 25, 0), // ""
+QT_MOC_LITERAL(3, 26, 9), // "deviceUid"
+QT_MOC_LITERAL(4, 36, 7), // "slt_Run"
+QT_MOC_LITERAL(5, 44, 5), // "index"
+QT_MOC_LITERAL(6, 50, 10), // "slt_OnDone"
+QT_MOC_LITERAL(7, 61, 4), // "Task"
+QT_MOC_LITERAL(8, 66, 4), // "task"
+QT_MOC_LITERAL(9, 71, 12) // "slt_taskDone"
 
     },
-    "TaskManager\0slt_Run\0\0index\0slt_OnDone\0"
-    "Task\0task\0slt_taskDone"
+    "TaskManager\0sig_callTask\0\0deviceUid\0"
+    "slt_Run\0index\0slt_OnDone\0Task\0task\0"
+    "slt_taskDone"
 };
 #undef QT_MOC_LITERAL
 
@@ -50,22 +53,28 @@ static const uint qt_meta_data_TaskManager[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       3,   14, // methods
+       4,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       0,       // signalCount
+       1,       // signalCount
+
+ // signals: name, argc, parameters, tag, flags
+       1,    1,   34,    2, 0x06 /* Public */,
 
  // slots: name, argc, parameters, tag, flags
-       1,    1,   29,    2, 0x0a /* Public */,
-       4,    1,   32,    2, 0x0a /* Public */,
-       7,    1,   35,    2, 0x0a /* Public */,
+       4,    1,   37,    2, 0x0a /* Public */,
+       6,    1,   40,    2, 0x0a /* Public */,
+       9,    1,   43,    2, 0x0a /* Public */,
+
+ // signals: parameters
+    QMetaType::Void, QMetaType::QString,    3,
 
  // slots: parameters
-    QMetaType::Void, QMetaType::Int,    3,
-    QMetaType::Void, 0x80000000 | 5,    6,
-    QMetaType::Void, QMetaType::Int,    3,
+    QMetaType::Void, QMetaType::Int,    5,
+    QMetaType::Void, 0x80000000 | 7,    8,
+    QMetaType::Void, QMetaType::Int,    5,
 
        0        // eod
 };
@@ -75,10 +84,20 @@ void TaskManager::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id,
     if (_c == QMetaObject::InvokeMetaMethod) {
         TaskManager *_t = static_cast<TaskManager *>(_o);
         switch (_id) {
-        case 0: _t->slt_Run((*reinterpret_cast< int(*)>(_a[1]))); break;
-        case 1: _t->slt_OnDone((*reinterpret_cast< Task(*)>(_a[1]))); break;
-        case 2: _t->slt_taskDone((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 0: _t->sig_callTask((*reinterpret_cast< QString(*)>(_a[1]))); break;
+        case 1: _t->slt_Run((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 2: _t->slt_OnDone((*reinterpret_cast< Task(*)>(_a[1]))); break;
+        case 3: _t->slt_taskDone((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
+        }
+    } else if (_c == QMetaObject::IndexOfMethod) {
+        int *result = reinterpret_cast<int *>(_a[0]);
+        void **func = reinterpret_cast<void **>(_a[1]);
+        {
+            typedef void (TaskManager::*_t)(QString );
+            if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&TaskManager::sig_callTask)) {
+                *result = 0;
+            }
         }
     }
 }
@@ -108,14 +127,21 @@ int TaskManager::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 3)
+        if (_id < 4)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 3;
+        _id -= 4;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 3)
+        if (_id < 4)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 3;
+        _id -= 4;
     }
     return _id;
+}
+
+// SIGNAL 0
+void TaskManager::sig_callTask(QString _t1)
+{
+    void *_a[] = { Q_NULLPTR, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 0, _a);
 }
 QT_END_MOC_NAMESPACE

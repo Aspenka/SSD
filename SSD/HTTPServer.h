@@ -22,6 +22,8 @@ private:
     QNetworkAccessManager*  manager;
     QTcpServer              server;
 
+    QJsonDocument toJsonDocument(QString command);
+
 signals:
 
 public slots:
